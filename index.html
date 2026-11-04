@@ -111,6 +111,22 @@ td.neg,.neg{color:var(--bad);font-weight:600}
 .st-in{background:var(--in-bg);color:var(--in-ink)} .st-low{background:var(--warn-bg);color:var(--warn)} .st-excess{background:var(--info-bg);color:var(--info)}
 .st-out{background:var(--line2);color:var(--muted)} .st-neg{background:var(--bad);color:#fff} .st-nolevel{background:transparent;color:var(--muted);border:1px dashed var(--line)}
 .st-fast{background:var(--in-bg);color:var(--in-ink)} .st-normal{background:var(--info-bg);color:var(--info)} .st-slow{background:var(--warn-bg);color:var(--warn)} .st-nosale{background:var(--line2);color:var(--muted)}
+.mvlist{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden;max-height:680px;overflow-y:auto}
+details.mv{border-top:1px solid var(--line2)}
+details.mv:first-child{border-top:0}
+details.mv>summary{list-style:none;display:flex;gap:10px;align-items:center;padding:9px 12px;cursor:pointer}
+details.mv>summary::-webkit-details-marker{display:none}
+details.mv>summary:hover{background:var(--soft)}
+details.mv>summary .chv{width:16px;flex:0 0 16px;color:var(--muted);transition:transform .15s}
+details.mv[open]>summary .chv{transform:rotate(90deg)}
+details.mv>summary .nm{flex:1;min-width:0}
+details.mv>summary .nm small{color:var(--muted);margin-left:6px}
+details.mv[open]>summary{background:var(--soft);position:sticky;top:0;z-index:1}
+.mvbody{padding:4px 12px 12px}
+.mvbody tr.ob td{color:var(--muted);font-style:italic}
+.mvbody tr.cb td{font-weight:700;border-top:2px solid var(--line)}
+.mvcust{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.mvcust input{width:120px}
 a.il{color:inherit;text-decoration:none;border-bottom:1px dotted var(--muted);cursor:pointer}
 a.il:hover{color:var(--brand)}
 a.go{color:var(--brand);font-weight:600;text-decoration:none;cursor:pointer;font-size:13px;white-space:nowrap}
@@ -409,7 +425,7 @@ input,select,textarea{font-weight:500}
 <script>
 'use strict';
 /* ───────── shell: login, loading the data, theme ───────── */
-const VERSION = 'v1.0.1', SHEET_SCRIPT = 'v2.0.0', ENTRY_URL = 'entry/';
+const VERSION = 'v1.0.2', SHEET_SCRIPT = 'v2.0.0', ENTRY_URL = 'entry/';
 const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbws7kmv6v4aR-UvP22BTQS7DtoMMFbrv4aKdbseCPuthXisC3wI7e9U-SOWMU_uDng/exec';
 const SESS_KEY = 'ims.session', URL_KEY = 'ims.url', CACHE_KEY = 'imsDash.cache';
 const $$ = id => document.getElementById(id);
@@ -628,7 +644,8 @@ const PERIODS = {
 function rangeTxt(r) { return r[0] === r[1] ? dStr(r[0]) : dStr(Math.max(0, r[0])) + ' to ' + dStr(r[1]); }
 function seg(id, opts, cur) { return '<span class="seg" data-seg="' + id + '">' + opts.map(([v, l]) => '<button data-v="' + v + '"' + (v === cur ? ' class="on"' : '') + '>' + l + '</button>').join('') + '</span>'; }
 function perSeg(id, cur, keys) { return seg(id, (keys || ['today', 'week', 'month']).map(k => [k, PERIODS[k].l]), cur); }
-function pLink(p) { return '<a class="il" data-item="' + p.i + '">' + esc(p.p) + '</a>'; }
+function pLink(p) { return esc(p.p); }   // item names in reports are plain text; the item card opens only from Current stock
+function csLink(p) { return ROLE === 'user' ? esc(p.p) : '<a class="il" data-item="' + p.i + '">' + esc(p.p) + '</a>'; }
 
 /* tooltip */
 const tip = $('tip');
@@ -860,14 +877,14 @@ function drawStock() {
   const q = CS.q.trim().toLowerCase(), user = ROLE === 'user';
   const rows = P.filter(p => p.c !== '(not in CURRENT STOCK)' && (!q || p.p.toLowerCase().includes(q)) && (!CS.cat || p.c === CS.cat) && (!CS.loc || p[CS.loc] !== 0) && (!CS.st || statusOf(p) === CS.st) && (!CS.unit || p.unit === CS.unit))
     .map(p => ({ pp: p, i: p.i, p: p.p, c: p.c, WH: p.WH, BB1: p.BB1, BB2: p.BB2, tot: p.tot, u: unitLabel(p) + (p.bag ? ' (bags)' : ''), st: statusOf(p), sold: SOLD30[p.i], days: daysLeft(p) }));
-  const cols = [{ k: 'p', l: 'Item', f: r => pLink(r.pp), sv: r => r.p }, { k: 'c', l: 'Category', f: r => '<span class="small muted">' + esc(r.c) + '</span>' }];
+  const cols = [{ k: 'p', l: 'Item', f: r => csLink(r.pp), sv: r => r.p }, { k: 'c', l: 'Category', f: r => '<span class="small muted">' + esc(r.c) + '</span>' }];
   LOCS.forEach(l => cols.push({ k: l, l, n: 1, neg: 1, f: r => CS.loc === l ? '<b>' + fmt(r[l]) + '</b>' : fmt(r[l]) }));
   cols.push({ k: 'tot', l: 'Total', n: 1, neg: 1, f: r => '<b>' + fmt(r.tot) + '</b>' }, { k: 'u', l: 'Unit', f: r => '<span class="small muted">' + r.u + '</span>' }, { k: 'st', l: 'Status', f: r => stTag(r.st), sv: r => ['neg', 'out', 'low', 'in', 'excess', 'nolevel'].indexOf(r.st) });
   if (!user) cols.push({ k: 'sold', l: 'Sold 30 days', n: 1 }, { k: 'days', l: 'Days left', n: 1, f: r => r.days == null ? '—' : r.days });
   $('csTable').innerHTML = table('cs', cols, rows, { limit: 700, maxH: 640, rerender: drawStock });
   $('csCount').textContent = rows.length + ' items';
 }
-document.addEventListener('click', e => { const a = e.target.closest('[data-item]'); if (a) { e.preventDefault(); itemCard(P[+a.dataset.item]); } const g = e.target.closest('[data-goto]'); if (g) { e.preventDefault(); showTab(g.dataset.goto); } });
+document.addEventListener('click', e => { const a = e.target.closest('[data-item]'); if (a) { e.preventDefault(); if (ROLE !== 'user') itemCard(P[+a.dataset.item]); } const g = e.target.closest('[data-goto]'); if (g) { e.preventDefault(); showTab(g.dataset.goto); } });
 
 const r3 = x => Math.round(x * 1000) / 1000;
 /* item card */
@@ -964,16 +981,84 @@ function renderRestock() {
       rows, { sort: 'days', dir: 1, maxH: 660, rerender: renderRestock }) + '</div>';
 }
 
-function renderMove() {
-  const r = PERIODS[RP.move].r(), agg = new Map();
-  each(r[0], r[1], m => { const o = agg.get(m[1]) || { i: m[1], inT: {}, outT: {} }; const tt = D.types[m[4]] || '(blank)'; const bucket = m[5] ? o.outT : o.inT; bucket[tt] = (bucket[tt] || 0) + m[2]; agg.set(m[1], o); });
-  const open = HIST.end[r[0] - 1] || new Float64Array(P.length);
-  const rows = [...agg.values()].map(o => { const p = P[o.i]; const g = (b, k) => b[k] || 0; return { pp: p, p: p.p, c: p.c, open: r2(open[p.i]), prod: g(o.inT, 'Production'), pur: g(o.inT, 'Purchase'), ret: g(o.inT, 'Return'), tin: g(o.inT, 'Transfer in'), sal: g(o.outT, 'Sales'), use: g(o.outT, 'Usage'), tout: g(o.outT, 'Transfer Out'), adj: g(o.inT, 'Stock Correction') + g(o.inT, 'Opening balance') - g(o.outT, 'Stock correction'), close: r2(HIST.end[r[1]][p.i]), u: unitLabel(p) }; });
-  $('t-r-move').innerHTML = '<div class="card">' + head('Stock movement', rangeTxt(r) + ' · every item that moved, in its own unit', perSeg('moveP', RP.move, ['today', 'week', 'month', 'lmonth', 'all'])) +
-    table('move', [{ k: 'p', l: 'Item', f: r => pLink(r.pp) }, { k: 'u', l: 'Unit' }, { k: 'open', l: 'Opening', n: 1, neg: 1 }, { k: 'prod', l: 'Production', n: 1 }, { k: 'pur', l: 'Purchase', n: 1 }, { k: 'ret', l: 'Return', n: 1 }, { k: 'tin', l: 'Transfer in', n: 1 }, { k: 'sal', l: 'Sales', n: 1 }, { k: 'use', l: 'Usage', n: 1 }, { k: 'tout', l: 'Transfer out', n: 1 }, { k: 'adj', l: 'Corrections', n: 1, neg: 1 }, { k: 'close', l: 'Closing', n: 1, neg: 1, f: r => '<b>' + fmt(r.close) + '</b>' }],
-      rows, { sort: 'sal', maxH: 640, rerender: renderMove }) + '</div>';
+/* Stock movement: one line per item that moved in the period; open a line to see every entry with the total stock after it */
+const MV = { per: 'year', from: '', to: '', q: '', cat: '', open: new Set() };
+const MV_PER = { d7: ['7 days', () => [ASOF - 6, ASOF]], m1: ['1 month', () => [ASOF - 29, ASOF]], year: ['1 year', () => [ASOF - 364, ASOF]], custom: ['Custom', null] };
+function dmyDay(v) {
+  const m = String(v || '').trim().match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/); if (!m) return null;
+  const d = new Date(+m[3], +m[2] - 1, +m[1]); return d.getDate() === +m[1] && d.getMonth() === +m[2] - 1 ? dayOf(d) : null;
 }
-SEGH.moveP = v => { RP.move = v; renderMove(); };
+function moveRange() {
+  let r;
+  if (MV.per === 'custom') { const a = dmyDay(MV.from), b = dmyDay(MV.to); if (a == null || b == null) return null; r = [Math.min(a, b), Math.max(a, b)]; }
+  else r = MV_PER[MV.per][1]();
+  return [Math.max(0, r[0]), Math.min(ASOF, r[1])];
+}
+const isXfer = m => /^transfer/i.test(D.types[m[4]] || '');
+function moveItems(r) {
+  const agg = new Map();
+  each(r[0], r[1], m => { const o = agg.get(m[1]) || { i: m[1], n: 0 }; o.n++; agg.set(m[1], o); });
+  return [...agg.values()].map(o => Object.assign(o, { pp: P[o.i] }));
+}
+function moveLedger(i, r) {   // oldest first, running total of all godowns (a transfer leaves the total unchanged)
+  const out = []; let bal = r2(r[0] > 0 ? HIST.end[r[0] - 1][i] : 0);
+  const open = bal;
+  for (let d = r[0]; d <= r[1]; d++) for (const m of BYDAY[d]) {
+    if (m[1] !== i) continue;
+    if (!isXfer(m)) bal = r3(bal + (m[5] ? -m[2] : m[2]));
+    out.push({ d, type: D.types[m[4]] || '(blank)', loc: LOCS[m[3]], inQ: m[5] ? null : m[2], outQ: m[5] ? m[2] : null, bal });
+  }
+  return { open, rows: out, close: bal };
+}
+function ledgerHtml(i, r) {
+  const p = P[i], u = unitLabel(p), L = moveLedger(i, r), n = v => v == null ? '' : fmt(v);
+  return '<div class="tw" style="max-height:420px;overflow:auto"><table><thead><tr><th>Date</th><th>Type</th><th>Godown</th><th class="n">In</th><th class="n">Out</th><th class="n">Total stock</th></tr></thead><tbody>' +
+    '<tr class="ob"><td>' + dStr(r[0]) + '</td><td colspan="4">Opening stock</td><td class="n' + (L.open < 0 ? ' neg' : '') + '">' + fmt(L.open) + '</td></tr>' +
+    L.rows.map(x => '<tr><td>' + dStr(x.d) + '</td><td>' + esc(x.type) + '</td><td>' + x.loc + '</td><td class="n">' + n(x.inQ) + '</td><td class="n">' + n(x.outQ) + '</td><td class="n' + (x.bal < 0 ? ' neg' : '') + '"><b>' + fmt(x.bal) + '</b></td></tr>').join('') +
+    '<tr class="cb"><td>' + dStr(r[1]) + '</td><td colspan="4">Closing stock (' + u + ')</td><td class="n' + (L.close < 0 ? ' neg' : '') + '">' + fmt(L.close) + '</td></tr></tbody></table></div>' +
+    '<p class="small muted" style="margin:6px 0 0">Total stock = all godowns together after that entry. A transfer moves stock between godowns, so the total stays the same.</p>';
+}
+function renderMove() {
+  const r = moveRange();
+  const cust = MV.per === 'custom' ? '<span class="mvcust"><input id="mvFrom" inputmode="numeric" placeholder="DD-MM-YYYY" value="' + esc(MV.from) + '"> to <input id="mvTo" inputmode="numeric" placeholder="DD-MM-YYYY" value="' + esc(MV.to) + '"><button class="b" id="mvGo">Show</button></span>' : '';
+  $('t-r-move').innerHTML = '<div class="card">' + head('Stock movement', r ? rangeTxt(r) + ' · items that moved in this period. Open an item to see every entry.' : 'Enter both dates as DD-MM-YYYY.',
+      seg('moveP', Object.entries(MV_PER).map(([k, v]) => [k, v[0]]), MV.per) + (r ? csvBtn('move', 'Stock movement') : '')) +
+    (cust ? '<div class="row filters">' + cust + '</div>' : '') +
+    (r ? '<div class="row filters"><input id="mvQ" placeholder="Search item" value="' + esc(MV.q) + '" style="min-width:200px;flex:1"><select id="mvCat"><option value="">All categories</option>' +
+      CATS.map(c => '<option' + (c === MV.cat ? ' selected' : '') + '>' + esc(c) + '</option>').join('') + '</select><span class="muted small" id="mvCount"></span></div><div id="mvList"></div>' : '') + '</div>';
+  if (cust) {
+    ['mvFrom', 'mvTo'].forEach(id => { const el = $(id); el.addEventListener('input', () => { let v = el.value.replace(/\D/g, '').slice(0, 8), o = v.slice(0, 2); if (v.length > 2) o += '-' + v.slice(2, 4); if (v.length > 4) o += '-' + v.slice(4); el.value = o; });
+      el.addEventListener('keydown', e => { if (e.key === 'Enter') $('mvGo').click(); }); });
+    $('mvGo').onclick = () => { MV.from = $('mvFrom').value; MV.to = $('mvTo').value; MV.open.clear(); renderMove(); };
+  }
+  if (!r) return;
+  $('mvQ').addEventListener('input', () => { MV.q = $('mvQ').value; drawMoveList(); });
+  $('mvCat').addEventListener('change', () => { MV.cat = $('mvCat').value; drawMoveList(); });
+  drawMoveList();
+}
+function drawMoveList() {
+  const r = moveRange(), q = MV.q.trim().toLowerCase();
+  const items = moveItems(r).filter(o => (!q || o.pp.p.toLowerCase().includes(q)) && (!MV.cat || o.pp.c === MV.cat)).sort((a, b) => a.pp.p.localeCompare(b.pp.p));
+  const lim = 800;
+  $('mvList').innerHTML = items.length ? '<div class="mvlist">' + items.slice(0, lim).map(o => {
+    const op = MV.open.has(o.i);
+    return '<details class="mv" data-mv="' + o.i + '"' + (op ? ' open' : '') + '><summary><svg class="chv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>' +
+      '<span class="nm"><b>' + esc(o.pp.p) + '</b><small>' + esc(o.pp.c) + '</small></span><span class="muted small">' + o.n + ' entr' + (o.n === 1 ? 'y' : 'ies') + '</span></summary><div class="mvbody">' + (op ? ledgerHtml(o.i, r) : '') + '</div></details>';
+  }).join('') + '</div>' + (items.length > lim ? '<p class="small muted">Showing ' + lim + ' of ' + items.length + '. Use search to narrow down.</p>' : '')
+    : '<p class="muted">No item moved in this period.</p>';
+  $('mvCount').textContent = items.length + ' item' + (items.length === 1 ? '' : 's');
+  // every entry of the period, for "Download for Excel"
+  const all = [];
+  items.forEach(o => moveLedger(o.i, r).rows.forEach(x => all.push({ d: dStr(x.d), p: o.pp.p, c: o.pp.c, type: x.type, loc: x.loc, inQ: x.inQ, outQ: x.outQ, bal: x.bal, u: unitLabel(o.pp) })));
+  TABLES.move = { cols: [{ k: 'd', l: 'Date' }, { k: 'p', l: 'Item' }, { k: 'c', l: 'Category' }, { k: 'type', l: 'Type' }, { k: 'loc', l: 'Godown' }, { k: 'inQ', l: 'In' }, { k: 'outQ', l: 'Out' }, { k: 'bal', l: 'Total stock after' }, { k: 'u', l: 'Unit' }], rows: all };
+}
+document.addEventListener('toggle', e => {
+  const d = e.target; if (!d.matches || !d.matches('details.mv')) return;
+  const i = +d.dataset.mv, r = moveRange(); if (!r) return;
+  if (d.open) { MV.open.add(i); const b = d.querySelector('.mvbody'); if (!b.innerHTML) b.innerHTML = ledgerHtml(i, r); }
+  else MV.open.delete(i);
+}, true);
+SEGH.moveP = v => { if (v === 'custom' && !MV.from) { MV.from = dStr(Math.max(0, ASOF - 29)); MV.to = dStr(ASOF); } MV.per = v; MV.open.clear(); renderMove(); };
 
 function renderNeg() {
   const tot = P.filter(p => p.tot < 0), gd = []; P.forEach(p => LOCS.forEach(l => { if (p[l] < 0 && p.tot >= 0) gd.push({ pp: p, p: p.p, l, v: p[l], tot: p.tot }); }));
@@ -1103,7 +1188,7 @@ function renderChecks() {
 const TITLES = {
   dash: ['Dashboard', 'Top movers first; everything else folds open'], stock: ['Current stock', 'WH, BB2 and BB1 — click an item for its card'],
   'r-top': ['Top movers', 'Sales only — pieces and kg kept separate'], 'r-slow': ['Slow & dead stock', 'Items with stock that are not selling'], 'r-restock': ['Restock list', 'Below red level, with quantity up to green'],
-  'r-move': ['Stock movement', 'Opening, in, out and closing per item'], 'r-neg': ['Negative stock', 'Kept off the dashboard'], 'r-month': ['Month-end report', 'Opening, in, out, closing per category'],
+  'r-move': ['Stock movement', 'Every entry per item, for the period you pick'], 'r-neg': ['Negative stock', 'Kept off the dashboard'], 'r-month': ['Month-end report', 'Opening, in, out, closing per category'],
   'r-prod': ['Production report', 'By day, godown and item'], 'r-pvs': ['Production vs sales', 'What to make more of, what to slow down'], 'r-wire': ['Wire usage & reorder', 'Wire used, stock, days left, wire to order'],
   'r-inv': ['Inventory turns', 'How fast stock is sold and replaced'], 'r-item': ['Item turns', 'Turns per item'], 'r-checks': ['Data checks', 'Things that make the figures less accurate']
 };
