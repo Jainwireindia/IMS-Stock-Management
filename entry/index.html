@@ -333,6 +333,7 @@ input,select,textarea{font-weight:500}
       <a data-t="load">Loading list</a>
       <a data-t="quick">Quick entry</a>
       <a data-t="xfer">Godown transfer</a>
+      <a id="toCheck" href="sheet-check.html" target="_blank" title="Compare the Original IMS sheet with the Entry copy (opens in a new tab)">Sheet check ↗</a>
     </div>
     <a data-t="set"><svg width="20" height="20"><use href="#i-set"/></svg><span class="lbl">Settings</span></a>
     <a id="toDash" href="../" data-ext="1"><svg width="20" height="20"><use href="#i-chart"/></svg><span class="lbl">IMS Stock Dashboard</span></a>
@@ -505,7 +506,7 @@ input,select,textarea{font-weight:500}
 
 <script>
 'use strict';
-const VERSION = 'v2.0.4';
+const VERSION = 'v2.0.5';
 const SHEET_SCRIPT = 'v2.0.0';
 const DASH_URL = '../';   // the IMS Stock Dashboard (same site, one folder up)
 const LOCS = ['WH', 'BB2', 'BB1'];
@@ -2069,6 +2070,8 @@ $('catSave').onclick = () => { if (CO) saveCatOrder(CO.slice()); };
 $('catReset').onclick = () => { CO = []; for (const p of S.products) if (p.c && !CO.includes(p.c)) CO.push(p.c); renderCatOrder(); $('catOrderMsg').innerHTML = '<span class="tag t-warn">Not saved</span>'; };
 $('ver').textContent = VERSION; $('gVer').textContent = VERSION + '. Needs Sheet Script ' + SHEET_SCRIPT;
 $('toDash').href = DASH_URL;
+// Sheet Check: staff-only page on the same site; it reads this tool's saved login (ims.session)
+$('toCheck').onclick = e => { e.preventDefault(); if (!S.token) { showGate('Log in to open Sheet check.'); return; } window.open('sheet-check.html', '_blank'); };
 try { S.url = localStorage.getItem(URL_KEY) || DEFAULT_URL; } catch (e) { S.url = DEFAULT_URL; }
 $('sUrl').value = S.url; $('gUser').value = recall('lastUser');
 showTab('home');

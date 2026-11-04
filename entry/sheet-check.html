@@ -1,0 +1,1219 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>IMS Sheet Check</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: collapsible deep-teal sidebar + card report on a faint weldmesh grid (IMS "Look v2") */
+:root{
+  --teal:#2A9D95; --teal-deep:#1d7a73; --teal-soft:#d3ebe8; --on-teal:#ffffff; --yellow:#e3a613;
+  --bg:#e2eeec; --mesh:rgba(42,157,149,.09); --glow:rgba(255,255,255,.75);
+  --card:#ffffff; --card-2:#f4f9f8; --ink:#0b191d; --muted:#4f666a; --faint:#7d9295; --line:#d2e2df;
+  --side:#0d2f2d; --side-mesh:rgba(227,166,19,.07); --side-ink:#dcefed; --side-muted:#8db7b2; --side-hover:rgba(255,255,255,.07); --side-active:rgba(42,157,149,.35);
+  --red:#bf3a32; --red-bg:#fbe8e6; --amber:#9a6406; --amber-bg:#fcf1d8; --green:#1f7d52; --green-bg:#e0f3e8; --slate:#4d6870; --slate-bg:#e6eef0; --blue:#2b6cb0; --blue-bg:#e3eefb;
+  --shadow:0 1px 2px rgba(11,25,29,.06),0 6px 20px rgba(11,25,29,.05);
+  --font:"Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --teal-soft:#123a37; --bg:#081214; --mesh:rgba(42,157,149,.07); --glow:rgba(42,157,149,.10);
+  --card:#0f1c1f; --card-2:#132428; --ink:#edf5f4; --muted:#9ab3b4; --faint:#6f8a8c; --line:#1f3539;
+  --side:#040c0e; --side-ink:#d6eae8; --side-muted:#7aa29e;
+  --red:#ff8a80; --red-bg:#3a1916; --amber:#f2c063; --amber-bg:#352710; --green:#6fd6a0; --green-bg:#12301f; --slate:#a9c0c5; --slate-bg:#1a2b2f; --blue:#8cbcf5; --blue-bg:#14263b;
+  --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --teal-soft:#123a37; --bg:#081214; --mesh:rgba(42,157,149,.07); --glow:rgba(42,157,149,.10);
+  --card:#0f1c1f; --card-2:#132428; --ink:#edf5f4; --muted:#9ab3b4; --faint:#6f8a8c; --line:#1f3539;
+  --side:#040c0e; --side-ink:#d6eae8; --side-muted:#7aa29e;
+  --red:#ff8a80; --red-bg:#3a1916; --amber:#f2c063; --amber-bg:#352710; --green:#6fd6a0; --green-bg:#12301f; --slate:#a9c0c5; --slate-bg:#1a2b2f; --blue:#8cbcf5; --blue-bg:#14263b;
+  --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:var(--font);font-size:14.5px;font-weight:500;color:var(--ink);background:var(--bg);
+  background-image:radial-gradient(ellipse 80% 40% at 50% -10%,var(--glow),transparent 70%),
+  linear-gradient(var(--mesh) 1px,transparent 1px),linear-gradient(90deg,var(--mesh) 1px,transparent 1px);
+  background-size:auto,30px 30px,30px 30px;background-attachment:fixed;line-height:1.5;font-variant-numeric:tabular-nums;font-variant-ligatures:no-contextual;font-feature-settings:"calt" 0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:50;background:var(--bg)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100%}
+.app.collapsed{grid-template-columns:74px minmax(0,1fr)}
+/* sidebar */
+.side{position:sticky;top:env(safe-area-inset-top,0px);height:100vh;background:var(--side);color:var(--side-ink);display:flex;flex-direction:column;gap:18px;
+  padding:18px 12px;padding-left:max(12px,env(safe-area-inset-left,0px));
+  background-image:linear-gradient(var(--side-mesh) 1px,transparent 1px),linear-gradient(90deg,var(--side-mesh) 1px,transparent 1px);background-size:30px 30px;overflow:auto}
+.brand{display:flex;align-items:center;gap:11px;padding:4px 6px}
+.logo{width:38px;height:38px;border-radius:10px;background:var(--teal);flex:none;position:relative;overflow:hidden;
+  background-image:linear-gradient(rgba(227,166,19,.95) 2px,transparent 2px),linear-gradient(90deg,rgba(227,166,19,.95) 2px,transparent 2px);background-size:9px 9px;background-position:3px 3px;box-shadow:inset 0 0 0 2px rgba(255,255,255,.12)}
+.brand b{font-size:16px;font-weight:800;letter-spacing:-.01em;display:block;line-height:1.15}
+.brand small{color:var(--side-muted);font-size:11.5px;font-weight:600}
+.nav{display:flex;flex-direction:column;gap:3px}
+.nav button{all:unset;display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:10px;color:var(--side-ink);font-weight:600;font-size:14px;cursor:pointer}
+.nav button:hover{background:var(--side-hover)}
+.nav button.on{background:var(--side-active);color:#fff}
+.nav button:focus-visible{outline:2px solid var(--teal)}
+.nav svg{width:19px;height:19px;flex:none;opacity:.9}
+.nav .lbl{flex:1;white-space:nowrap}
+.nav .cnt{font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:99px;background:rgba(255,255,255,.1);color:var(--side-ink)}
+.nav .cnt.bad{background:#c8423b;color:#fff}.nav .cnt.ok{background:rgba(111,214,160,.22);color:#bff0d5}
+.nav button[disabled]{opacity:.38;cursor:default}
+.side-foot{margin-top:auto;display:flex;flex-direction:column;gap:10px}
+.seg{display:flex;background:rgba(255,255,255,.07);border-radius:10px;padding:3px}
+.seg button{all:unset;flex:1;text-align:center;font-size:12px;font-weight:700;padding:6px 4px;border-radius:8px;color:var(--side-muted);cursor:pointer}
+.seg button.on{background:var(--teal);color:#fff}
+.collapse-btn{all:unset;display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;color:var(--side-muted);font-size:13px;font-weight:600;cursor:pointer}
+.collapse-btn:hover{background:var(--side-hover)}
+.ver{color:var(--side-muted);font-size:11.5px;padding:0 10px}
+.app.collapsed .lbl,.app.collapsed .cnt,.app.collapsed .brand div,.app.collapsed .seg,.app.collapsed .ver,.app.collapsed .collapse-btn span{display:none}
+.app.collapsed .nav button,.app.collapsed .collapse-btn{justify-content:center}
+.app.collapsed .collapse-btn svg{transform:rotate(180deg)}
+/* main */
+.main{min-width:0;padding-block:28px 60px;padding-left:max(28px,env(safe-area-inset-left,0px));padding-right:max(28px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1{font-size:28px;font-weight:800;letter-spacing:-.02em;margin:0;line-height:1.2;text-wrap:balance}
+h2{font-size:19px;font-weight:800;letter-spacing:-.01em;margin:0;text-wrap:balance}
+h3{font-size:15px;font-weight:800;margin:0}
+.sub{color:var(--muted);margin:4px 0 0;max-width:70ch}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.pad{padding:20px 22px}
+.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 14px;font-weight:700;font-size:13.5px}
+.btn:hover{border-color:var(--teal)}
+.btn.primary{background:var(--teal);border-color:var(--teal);color:var(--on-teal)}
+.btn.primary:hover{background:var(--teal-deep)}
+.btn svg{width:16px;height:16px}
+.btn[disabled]{opacity:.45;cursor:default}
+.row-actions{display:flex;gap:8px;flex-wrap:wrap}
+/* load */
+.drops{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.drop{position:relative;border:2px dashed var(--line);border-radius:var(--r);background:var(--card);padding:22px;display:flex;flex-direction:column;gap:10px;min-height:170px;transition:border-color .15s,background .15s}
+.drop.over{border-color:var(--teal);background:var(--teal-soft)}
+.drop.has{border-style:solid;border-color:var(--teal)}
+.drop .tag{font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--teal-deep)}
+:root[data-theme="dark"] .drop .tag{color:var(--teal)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .drop .tag{color:var(--teal)}}
+.drop .fname{font-weight:800;font-size:15.5px;word-break:break-word}
+.drop .meta{color:var(--muted);font-size:13px}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.drop .hint{color:var(--muted);font-size:13.5px}
+.drop .ok{color:var(--green);font-weight:700;font-size:13px}
+.drop .err{color:var(--red);font-weight:700;font-size:13px}
+.what{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.what div{padding:14px 16px;border-radius:12px;background:var(--card-2);border:1px solid var(--line)}
+.what b{display:block;font-weight:800;margin-bottom:2px}
+.what span{color:var(--muted);font-size:13px}
+.busy{display:flex;align-items:center;gap:12px;font-weight:700;color:var(--teal-deep)}
+.spin{width:18px;height:18px;border-radius:50%;border:3px solid var(--teal-soft);border-top-color:var(--teal);animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+/* summary */
+.verdict{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:center;padding:22px 24px}
+.vicon{width:54px;height:54px;border-radius:14px;display:grid;place-items:center}
+.vicon svg{width:28px;height:28px}
+.vicon.bad{background:var(--red-bg);color:var(--red)}.vicon.ok{background:var(--green-bg);color:var(--green)}.vicon.warn{background:var(--amber-bg);color:var(--amber)}
+.verdict h2{font-size:22px}
+.verdict p{margin:4px 0 0;color:var(--muted)}
+.files{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.fcard{padding:16px 20px;display:flex;flex-direction:column;gap:8px}
+.fcard .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.fcard .nm{font-size:12.5px;color:var(--muted);word-break:break-word}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px}
+.kv div{display:flex;flex-direction:column}
+.kv span{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.kv b{font-size:18px;font-weight:800;white-space:nowrap}
+.checks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.ck{padding:16px 18px;display:flex;flex-direction:column;gap:10px;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.ck:hover{border-color:var(--teal)}
+.ck .t{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ck .big{font-size:30px;font-weight:800;line-height:1;letter-spacing:-.02em}
+.ck ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--muted)}
+.ck ul b{color:var(--ink)}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:3px 10px;border-radius:99px;white-space:nowrap;letter-spacing:.02em}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.p-red{background:var(--red-bg);color:var(--red)}.p-amber{background:var(--amber-bg);color:var(--amber)}.p-green{background:var(--green-bg);color:var(--green)}.p-slate{background:var(--slate-bg);color:var(--slate)}.p-blue{background:var(--blue-bg);color:var(--blue)}
+.two{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start}
+.todo{margin:12px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;counter-reset:t}
+.todo li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start;counter-increment:t}
+.todo li::before{content:counter(t);width:26px;height:26px;border-radius:8px;background:var(--teal-soft);color:var(--teal-deep);font-weight:800;display:grid;place-items:center;font-size:13px}
+:root[data-theme="dark"] .todo li::before{color:var(--teal)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .todo li::before{color:var(--teal)}}
+.todo b{font-weight:800}
+.todo span{color:var(--muted);font-size:13.5px}
+.dates{margin-top:12px;display:flex;flex-direction:column;gap:4px;max-height:420px;overflow:auto;padding-right:4px}
+.drow{display:grid;grid-template-columns:92px minmax(0,1fr) 46px;gap:10px;align-items:center;padding:5px 8px;border-radius:8px;font-size:13px;border:0;background:none;text-align:left;width:100%}
+.drow:hover{background:var(--card-2)}
+.drow .d{font-weight:700}
+.bar{display:flex;height:12px;border-radius:4px;overflow:hidden;background:var(--card-2)}
+.bar i{display:block;height:100%}
+.bar .o{background:var(--red)}.bar .c{background:var(--blue)}.bar .x{background:var(--amber)}.bar .n{background:var(--faint)}
+.drow .n2{text-align:right;font-weight:800}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+/* tables + filters */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:5px 12px;font-size:12.5px;font-weight:700;display:inline-flex;gap:6px;align-items:center}
+.chip.on{background:var(--teal);border-color:var(--teal);color:var(--on-teal)}
+.chip em{font-style:normal;opacity:.75}
+.search{flex:1;min-width:180px;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--card-2)}
+.datechip{background:var(--amber-bg);color:var(--amber);border-color:transparent}
+.tbl-wrap{overflow:auto;max-height:68vh}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:13.5px}
+th{position:sticky;top:0;background:var(--card-2);text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:800;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap;z-index:1}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right}
+td.prod{font-weight:700;min-width:200px}
+.two-val{display:flex;flex-direction:column;gap:2px}
+.two-val span{display:flex;gap:6px;align-items:baseline}
+.two-val small{font-size:10.5px;font-weight:800;color:var(--faint);width:14px}
+.diffv{background:var(--amber-bg);color:var(--amber);border-radius:5px;padding:0 5px;font-weight:700}
+.rown{color:var(--muted);font-size:12.5px;white-space:nowrap}
+.neg{color:var(--red)}.pos{color:var(--green)}
+.empty{padding:40px 20px;text-align:center;color:var(--muted)}
+.empty b{display:block;color:var(--ink);font-size:16px;font-weight:800;margin-bottom:4px}
+.more{padding:12px 16px;color:var(--muted);font-size:13px;border-top:1px solid var(--line)}
+.note{font-size:13px;color:var(--muted);font-weight:500}
+.issue{border-top:1px solid var(--line)}
+.issue:first-child{border-top:0}
+.issue summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:14px 18px}
+.issue summary::-webkit-details-marker{display:none}
+.issue summary:hover{background:var(--card-2)}
+.issue .it{font-weight:800}
+.issue .ie{color:var(--muted);font-size:13px}
+.issue .ic{font-weight:800;font-size:18px}
+.issue .chev{transition:transform .15s;color:var(--muted)}
+.issue[open] .chev{transform:rotate(90deg)}
+.issue .body{padding:0 18px 16px}
+.issue .body .tbl-wrap{border:1px solid var(--line);border-radius:10px;max-height:420px}
+.fileTabs{display:flex;gap:6px}
+.toast{position:fixed;bottom:max(20px,env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--card);padding:10px 18px;border-radius:10px;font-weight:700;font-size:13.5px;z-index:60;box-shadow:var(--shadow)}
+.warnline{font-size:12.5px;font-weight:700;color:var(--amber)}
+.fromrow{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.fromrow input{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--card-2);width:150px}
+.lastcheck{font-size:13px;color:var(--muted)}
+.paste{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.paste .card{padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.paste .card b{font-size:15px}
+.lock{max-width:460px;margin:14vh auto;padding:28px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center}
+.backbtn{all:unset;display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;color:var(--side-ink);font-size:13px;font-weight:700;cursor:pointer;background:rgba(255,255,255,.07)}
+.backbtn:hover{background:var(--side-hover)}
+.app.collapsed .backbtn span{display:none}
+@media (max-width:820px){.backbtn span{display:none}.paste{grid-template-columns:1fr}}
+textarea.copybox{width:100%;min-height:200px;border:1px solid var(--line);border-radius:10px;background:var(--card-2);padding:12px;font:12.5px/1.5 ui-monospace,Consolas,monospace;color:var(--ink)}
+@media (max-width:1000px){.checks{grid-template-columns:1fr 1fr}.what{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}}
+@media (max-width:820px){
+  .app,.app.collapsed{grid-template-columns:1fr}
+  .side{position:sticky;top:env(safe-area-inset-top,0px);height:auto;z-index:20;flex-direction:row;align-items:center;gap:10px;padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));overflow-x:auto}
+  .brand div,.side-foot .ver,.collapse-btn{display:none}
+  .nav{flex-direction:row}
+  .nav .cnt{display:none}
+  .side-foot{margin:0 0 0 auto}
+  .app.collapsed .lbl{display:inline}
+  .main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+  .drops,.files{grid-template-columns:1fr}
+  .kv{grid-template-columns:1fr 1fr}
+}
+@media (max-width:520px){.checks,.what{grid-template-columns:1fr}.verdict{grid-template-columns:1fr}.issue summary{grid-template-columns:auto minmax(0,1fr) auto}.issue .chev{display:none}}
+</style>
+
+<div class="app" id="app">
+  <aside class="side">
+    <div class="brand"><span class="logo" aria-hidden="true"></span><div><b>IMS Sheet Check</b><small>Original vs Entry copy</small></div></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-foot">
+      <button class="backbtn" id="backBtn" title="Back to Production entry"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 6l-6 6 6 6M4 12h16"/></svg><span>Back to Production entry</span></button>
+      <div class="seg" id="themeSeg" role="group" aria-label="Theme">
+        <button data-t="light">Light</button><button data-t="dark">Dark</button><button data-t="auto">Auto</button>
+      </div>
+      <button class="collapse-btn" id="collapseBtn" aria-label="Collapse sidebar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg><span>Collapse</span></button>
+      <div class="ver">v2.1.0 · WH · BB2 · BB1</div>
+    </div>
+  </aside>
+  <main class="main"><div class="wrap" id="view"></div></main>
+</div>
+
+<script>
+"use strict";
+const VERSION = "2.1.0";
+/* =====================================================================
+   1. XLSX READER (no library: ZIP + XML read in the browser)
+   ===================================================================== */
+async function inflateRaw(u8){
+  const ds = new DecompressionStream("deflate-raw");
+  const stream = new Blob([u8]).stream().pipeThrough(ds);
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+function readZip(buf){
+  const dv = new DataView(buf), u8 = new Uint8Array(buf);
+  let eocd = -1;
+  for(let i = u8.length - 22; i >= Math.max(0, u8.length - 70000); i--){ if(dv.getUint32(i, true) === 0x06054b50){ eocd = i; break; } }
+  if(eocd < 0) throw new Error("This file is not a real .xlsx file (zip end not found).");
+  const n = dv.getUint16(eocd + 10, true); let p = dv.getUint32(eocd + 16, true);
+  const files = {}; const dec = new TextDecoder();
+  for(let i = 0; i < n; i++){
+    if(dv.getUint32(p, true) !== 0x02014b50) break;
+    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true);
+    const nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true);
+    const lo = dv.getUint32(p + 42, true);
+    const name = dec.decode(u8.subarray(p + 46, p + 46 + nl));
+    files[name] = {method, csize, lo};
+    p += 46 + nl + xl + cl;
+  }
+  return {
+    has: nm => !!files[nm],
+    async text(nm){
+      const f = files[nm]; if(!f) return null;
+      const lnl = dv.getUint16(f.lo + 26, true), lxl = dv.getUint16(f.lo + 28, true);
+      const start = f.lo + 30 + lnl + lxl; const data = u8.subarray(start, start + f.csize);
+      const out = f.method === 0 ? data : await inflateRaw(data);
+      return dec.decode(out);
+    }
+  };
+}
+const ENT = {amp:"&",lt:"<",gt:">",quot:'"',apos:"'"};
+function unxml(s){ return s.indexOf("&") < 0 ? s : s.replace(/&(#x[0-9a-f]+|#\d+|\w+);/gi,(m,e)=> e[0]==="#" ? String.fromCodePoint(e[1]==="x"||e[1]==="X" ? parseInt(e.slice(2),16) : parseInt(e.slice(1),10)) : (ENT[e] ?? m)); }
+function attr(s, a){ const m = s.match(new RegExp("\\b" + a + '="([^"]*)"')); return m ? unxml(m[1]) : null; }
+function colIdx(letters){ let n = 0; for(const ch of letters) n = n * 26 + (ch.charCodeAt(0) - 64); return n - 1; }
+const DATE_IDS = new Set([14,15,16,17,18,19,20,21,22,27,30,36,45,46,47,50,57]);
+function isDateFormat(code){
+  if(!code) return false;
+  const c = code.replace(/"[^"]*"/g,"").replace(/\[[^\]]*\]/g,"").replace(/\\./g,"");
+  return /[dmy]/i.test(c) && !/^[#0.,%\s]*$/.test(c) && !/^general$/i.test(c);
+}
+async function readWorkbook(buf){
+  const zip = readZip(buf);
+  const wbx = await zip.text("xl/workbook.xml");
+  if(!wbx) throw new Error("This file is not an Excel workbook.");
+  const rels = (await zip.text("xl/_rels/workbook.xml.rels")) || "";
+  const relMap = {};
+  for(const m of rels.matchAll(/<Relationship\b([^>]*)\/?>/g)){ relMap[attr(m[1],"Id")] = attr(m[1],"Target"); }
+  const sheets = [];
+  for(const m of wbx.matchAll(/<sheet\b([^>]*)\/?>/g)){
+    const name = attr(m[1],"name"), rid = attr(m[1],"r:id");
+    let t = relMap[rid] || ""; t = t.startsWith("/") ? t.slice(1) : "xl/" + t.replace(/^\.\//,"");
+    sheets.push({name, path:t});
+  }
+  // shared strings
+  const sstx = await zip.text("xl/sharedStrings.xml") || "";
+  const sst = [];
+  for(const m of sstx.matchAll(/<si>([\s\S]*?)<\/si>/g)){
+    let s = ""; for(const t of m[1].matchAll(/<t(?:\s[^>]*)?>([\s\S]*?)<\/t>/g)) s += t[1];
+    if(/<t\s*\/>/.test(m[1]) && !s) s = "";
+    sst.push(unxml(s));
+  }
+  // styles: which style index is a date format
+  const stx = await zip.text("xl/styles.xml") || "";
+  const fmts = {};
+  for(const m of stx.matchAll(/<numFmt\b([^>]*)\/?>/g)) fmts[attr(m[1],"numFmtId")] = attr(m[1],"formatCode");
+  const xfDate = [];
+  const cx = stx.match(/<cellXfs\b[^>]*>([\s\S]*?)<\/cellXfs>/);
+  if(cx) for(const m of cx[1].matchAll(/<xf\b([^>]*?)(\/>|>)/g)){
+    const id = +(attr(m[1],"numFmtId") || 0);
+    xfDate.push(DATE_IDS.has(id) || isDateFormat(fmts[id]));
+  }
+  return {
+    names: sheets.map(s => s.name),
+    async sheet(name, maxCol = 20){
+      const sh = sheets.find(s => s.name === name); if(!sh) return null;
+      const x = await zip.text(sh.path); if(x == null) return null;
+      const rows = [];
+      const body = x.slice(x.indexOf("<sheetData"), x.lastIndexOf("</sheetData>"));
+      const re = /<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g; let m;
+      while((m = re.exec(body))){
+        const a = m[1]; const ref = attr(a,"r"); if(!ref) continue;
+        const rm = ref.match(/^([A-Z]+)(\d+)$/); if(!rm) continue;
+        const c = colIdx(rm[1]); if(c >= maxCol) continue;
+        const r = +rm[2]; const inner = m[2] || "";
+        const t = attr(a,"t"), s = attr(a,"s");
+        let v = null;
+        if(t === "inlineStr"){ let st = ""; for(const q of inner.matchAll(/<t(?:\s[^>]*)?>([\s\S]*?)<\/t>/g)) st += q[1]; v = unxml(st); }
+        else { const vm = inner.match(/<v>([\s\S]*?)<\/v>/); if(vm){
+          const raw = vm[1];
+          if(t === "s") v = sst[+raw] ?? ""; else if(t === "str") v = unxml(raw); else if(t === "b") v = raw === "1";
+          else if(t === "e") v = {err: unxml(raw)}; else { const f = parseFloat(raw); v = isNaN(f) ? unxml(raw) : f; }
+        }}
+        if(v === null || v === "") { if(!(rows[r] && rows[r][c])) continue; }
+        (rows[r] ||= [])[c] = {v, d: s != null && !!xfDate[+s]};
+      }
+      return rows;
+    }
+  };
+}
+/* =====================================================================
+   2. DATES (DD-MM-YYYY everywhere)
+   ===================================================================== */
+const DAY = 86400000, EPOCH = Date.UTC(1899,11,30);
+function serialToStr(n){ const d = new Date(EPOCH + Math.round(n) * DAY); return String(d.getUTCDate()).padStart(2,"0") + "-" + String(d.getUTCMonth()+1).padStart(2,"0") + "-" + d.getUTCFullYear(); }
+function ymdToSerial(y,m,d){ return Math.round((Date.UTC(y,m-1,d) - EPOCH)/DAY); }
+function parseDateText(s){
+  const m = String(s).trim().match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})$/); if(!m) return null;
+  let y = +m[3]; if(y < 100) y += 2000; const mo = +m[2], d = +m[1];
+  if(mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+  return ymdToSerial(y, mo, d);
+}
+function todaySerial(){ const t = new Date(); return ymdToSerial(t.getFullYear(), t.getMonth()+1, t.getDate()); }
+/* =====================================================================
+   3. PARSE ONE WORKBOOK INTO THE FOUR TABS
+   ===================================================================== */
+const TABS = {cs:"current stock", in:"stock in", out:"stock out", helper:"helper sheet"};
+const COPY_MARKERS = ["tool log","tool aliases","varient and item finder","users"];
+const GODOWNS = ["WH","BB2","BB1"];
+const IN_TYPES = ["opening balance","production","transfer in","return","purchase","stock correction"];
+const OUT_TYPES = ["sales","transfer out","usage","stock correction"];
+const txt = c => c == null ? "" : (typeof c.v === "object" && c.v ? "" : String(c.v));
+const low = s => String(s ?? "").toLowerCase();
+const normName = s => low(s).trim().replace(/\s+/g," ");
+
+function findHeader(rows, need, limit = 12){
+  for(let r = 1; r <= Math.min(limit, rows.length - 1); r++){
+    const row = rows[r]; if(!row) continue;
+    const h = row.map(c => normName(txt(c)));
+    if(need.every(fn => h.some(fn))) return {r, h};
+  }
+  return null;
+}
+function colOf(h, fn){ return h.findIndex(x => x && fn(x)); }
+
+async function parseFile(buf, fileName){
+  const wb = await readWorkbook(buf);
+  const byLow = {}; wb.names.forEach(n => byLow[normName(n)] = n);
+  const missing = Object.values(TABS).filter(t => !byLow[t]);
+  if(missing.length) throw new Error("Tab not found: " + missing.map(m => m.toUpperCase()).join(", ") + ". Download the IMS sheet as .xlsx (File → Download → Microsoft Excel).");
+  const isCopy = COPY_MARKERS.some(m => byLow[m]);
+  const out = {fileName, isCopy, tabNames: wb.names};
+  // logs
+  for(const key of ["in","out"]){
+    const rows = await wb.sheet(byLow[TABS[key]], 12);
+    const hd = findHeader(rows, [x => x === "product", x => x.startsWith("date")]);
+    if(!hd) throw new Error(TABS[key].toUpperCase() + ": header row with Date and Product not found.");
+    const C = {date: colOf(hd.h, x => x.startsWith("date")), prod: colOf(hd.h, x => x === "product"), qty: colOf(hd.h, x => x.startsWith("qty")),
+      loc: colOf(hd.h, x => x.startsWith("location") || x.startsWith("godown")), type: colOf(hd.h, x => x === "type" || x.startsWith("type"))};
+    if(C.qty < 0 || C.loc < 0) throw new Error(TABS[key].toUpperCase() + ": QTY or Location column not found.");
+    const list = [];
+    for(let r = hd.r + 1; r < rows.length; r++){
+      const row = rows[r]; if(!row) continue;
+      const dc = row[C.date], pc = row[C.prod], qc = row[C.qty], lc = row[C.loc], tc = C.type >= 0 ? row[C.type] : null;
+      const product = txt(pc), qtyRaw = qc ? qc.v : null;
+      if(!product.trim() && (qtyRaw === null || qtyRaw === "") && !txt(dc).trim()) continue;
+      let ds = null, dateText = "";
+      if(dc && typeof dc.v === "number") ds = Math.floor(dc.v);
+      else if(dc){ dateText = txt(dc).trim(); ds = parseDateText(dateText); }
+      let qty = null, qtyText = null;
+      if(typeof qtyRaw === "number") qty = qtyRaw;
+      else if(qtyRaw !== null && qtyRaw !== "") qtyText = typeof qtyRaw === "object" ? (qtyRaw.err || "error") : String(qtyRaw);
+      const loc = txt(lc), type = txt(tc);
+      list.push({r, ds, dateText, product, p: product, pn: normName(product), pl: low(product),
+        qty, qtyText, qtyDateFmt: !!(qc && qc.d && typeof qtyRaw === "number"),
+        loc, L: loc.trim().toUpperCase(), type, T: low(type).trim()});
+    }
+    out[key] = list;
+    (out.cols ||= {})[key] = C;
+  }
+  // current stock
+  {
+    const rows = await wb.sheet(byLow[TABS.cs], 10);
+    const hd = findHeader(rows, [x => x === "product", x => x.startsWith("wh")]);
+    if(!hd) throw new Error("CURRENT STOCK: header row with Product and WH Stock not found.");
+    const C = {cat: colOf(hd.h, x => x.startsWith("category")), prod: colOf(hd.h, x => x === "product"),
+      WH: colOf(hd.h, x => x.startsWith("wh")), BB2: colOf(hd.h, x => x.startsWith("bb2")), BB1: colOf(hd.h, x => x.startsWith("bb1")),
+      total: colOf(hd.h, x => x.startsWith("total")), status: colOf(hd.h, x => x.startsWith("status"))};
+    const list = [];
+    for(let r = hd.r + 1; r < rows.length; r++){
+      const row = rows[r]; if(!row) continue;
+      const name = txt(row[C.prod]); if(!name.trim()) continue;
+      const num = i => { const c = i >= 0 ? row[i] : null; return c && typeof c.v === "number" ? c.v : 0; };
+      list.push({r, name, pl: low(name), pn: normName(name), cat: C.cat >= 0 ? txt(row[C.cat]) : "",
+        WH: num(C.WH), BB2: num(C.BB2), BB1: num(C.BB1), total: num(C.total), hasTotal: C.total >= 0, status: C.status >= 0 ? txt(row[C.status]) : ""});
+    }
+    out.cs = list;
+  }
+  // helper
+  {
+    const rows = await wb.sheet(byLow[TABS.helper], 4);
+    const hd = findHeader(rows, [x => x === "product"], 5);
+    const pc = hd ? colOf(hd.h, x => x === "product") : 0, cc = hd ? colOf(hd.h, x => x.startsWith("category")) : 1;
+    const list = [];
+    for(let r = (hd ? hd.r : 1) + 1; r < rows.length; r++){
+      const row = rows[r]; if(!row) continue;
+      const name = txt(row[pc]); if(!name.trim()) continue;
+      list.push({r, name, pn: normName(name), cat: cc >= 0 ? txt(row[cc]).trim() : ""});
+    }
+    out.helper = list;
+  }
+  out.last = lastDate([...out.in, ...out.out]);
+  out.canon = new Map();
+  out.helper.forEach(x => { if(!out.canon.has(x.pn)) out.canon.set(x.pn, x.name); });
+  out.cs.forEach(x => { if(!out.canon.has(x.pn)) out.canon.set(x.pn, x.name); });
+  return out;
+}
+function lastDate(rows){
+  // "last entry date" = latest date among the bottom rows of each log (ignores a stray far-future typo higher up)
+  const vals = rows.map(r => r.ds).filter(d => d != null);
+  if(!vals.length) return null;
+  const t = todaySerial() + 1;
+  const ok = vals.filter(d => d <= t);
+  return ok.length ? Math.max(...ok) : Math.max(...vals);
+}
+/* =====================================================================
+   4. COMPARE
+   ===================================================================== */
+const KIND = {
+  onlyO: {label:"Missing in Entry copy", short:"Missing in copy", cls:"p-red", bar:"o", help:"This entry is in the Original but not in the Entry copy."},
+  onlyC: {label:"Missing in Original", short:"Missing in Original", cls:"p-blue", bar:"c", help:"This entry is in the Entry copy but not in the Original."},
+  name:  {label:"Product name differs", short:"Name differs", cls:"p-amber", bar:"x", help:"Same date, qty, godown and type, but a different product name. Check which name is right."},
+  "case":{label:"Name spelling differs", short:"Spelling differs", cls:"p-amber", bar:"x", help:"Same entry; the name differs only in capital letters or spaces."},
+  qty:   {label:"Quantity differs", short:"Qty differs", cls:"p-amber", bar:"x", help:"Same date, product, godown and type, but a different quantity."},
+  loc:   {label:"Godown differs", short:"Godown differs", cls:"p-amber", bar:"x", help:"Same entry, but entered at a different godown."},
+  type:  {label:"Type differs", short:"Type differs", cls:"p-amber", bar:"x", help:"Same entry, but a different Type (for example Sales vs Usage)."},
+  date:  {label:"Date differs", short:"Date differs", cls:"p-amber", bar:"x", help:"Same entry, but a different date (up to 7 days apart, or day and month swapped)."},
+  newerO:{label:"Not in copy yet", short:"Not in copy yet", cls:"p-slate", bar:"n", help:"Entered in the Original after the Entry copy's last entry date. Expected until the copy is brought up to date."},
+  newerC:{label:"Not in Original yet", short:"Not in Original yet", cls:"p-slate", bar:"n", help:"Entered in the Entry copy after the Original's last entry date."}
+};
+const qKey = r => r.qty != null ? String(Math.round(r.qty * 1000) / 1000) : "T:" + (r.qtyText || "");
+const dKey = r => r.ds != null ? String(r.ds) : "X:" + r.dateText;
+const tKey = r => r.T;
+
+function compareLogs(A, B, lastA, lastB){
+  let a = A.map((r,i) => ({r, i})), b = B.map((r,i) => ({r, i}));
+  const res = [];
+  function pass(keyFn, kindFn){
+    const m = new Map();
+    b.forEach(x => { const k = keyFn(x.r); if(!m.has(k)) m.set(k, []); m.get(k).push(x); });
+    const usedB = new Set(), restA = [];
+    for(const x of a){
+      const k = keyFn(x.r); const arr = m.get(k);
+      if(arr && arr.length){ const y = arr.shift(); usedB.add(y); const kind = kindFn(x.r, y.r); if(kind) res.push({kind, o:x.r, c:y.r}); }
+      else restA.push(x);
+    }
+    a = restA; b = b.filter(y => !usedB.has(y));
+  }
+  pass(r => [dKey(r), r.p, qKey(r), r.L, tKey(r)].join("|"), () => null);           // identical
+  pass(r => [dKey(r), r.pn.replace(/\s/g,""), qKey(r), r.L, tKey(r)].join("|"), () => "case"); // only capitals/spaces differ
+  pass(r => [dKey(r), qKey(r), r.L, tKey(r)].join("|"), () => "name");               // product differs
+  pass(r => [dKey(r), r.pn, r.L, tKey(r)].join("|"), () => "qty");
+  pass(r => [dKey(r), r.pn, qKey(r), tKey(r)].join("|"), () => "loc");
+  pass(r => [dKey(r), r.pn, qKey(r), r.L].join("|"), () => "type");
+  // date: same everything else, close date or day/month swapped
+  {
+    const m = new Map();
+    b.forEach(x => { const k = [x.r.pn, qKey(x.r), x.r.L, tKey(x.r)].join("|"); if(!m.has(k)) m.set(k, []); m.get(k).push(x); });
+    const usedB = new Set(), restA = [];
+    for(const x of a){
+      const arr = m.get([x.r.pn, qKey(x.r), x.r.L, tKey(x.r)].join("|")); let best = null, bd = 1e9;
+      if(arr && x.r.ds != null) for(const y of arr){
+        if(usedB.has(y) || y.r.ds == null) continue;
+        const diff = Math.abs(y.r.ds - x.r.ds);
+        const swap = serialToStr(x.r.ds).split("-"); const sw = parseDateText(swap[1] + "-" + swap[0] + "-" + swap[2]);
+        const ok = diff <= 7 || (sw != null && sw === y.r.ds);
+        if(ok && diff < bd){ bd = diff; best = y; }
+      }
+      if(best){ usedB.add(best); res.push({kind:"date", o:x.r, c:best.r}); } else restA.push(x);
+    }
+    a = restA; b = b.filter(y => !usedB.has(y));
+  }
+  for(const x of a) res.push({kind: (lastB != null && x.r.ds != null && x.r.ds > lastB) ? "newerO" : "onlyO", o:x.r, c:null});
+  for(const y of b) res.push({kind: (lastA != null && y.r.ds != null && y.r.ds > lastA) ? "newerC" : "onlyC", o:null, c:y.r});
+  const ref = d => (d.o || d.c);
+  res.sort((x,y) => (ref(x).ds ?? 1e9) - (ref(y).ds ?? 1e9) || (x.o ? x.o.r : 1e9) - (y.o ? y.o.r : 1e9) || (x.c ? x.c.r : 1e9) - (y.c ? y.c.r : 1e9));
+  return res;
+}
+
+// what the sheet's own SUMIFS adds up per product (case-insensitive name, exact godown, numbers only)
+function entryTotals(f){
+  const m = new Map();
+  const add = (r, s) => {
+    if(r.qty == null) return; const g = r.loc.toUpperCase(); if(!GODOWNS.includes(g)) return;
+    let e = m.get(r.pl); if(!e){ e = {WH:0,BB2:0,BB1:0}; m.set(r.pl, e); } e[g] += s * r.qty;
+  };
+  f.in.forEach(r => add(r, 1)); f.out.forEach(r => add(r, -1));
+  return m;
+}
+const near = (a,b) => Math.abs(a - b) < 0.005;
+const r2 = n => Math.round(n * 100) / 100;
+
+function compareStock(O, Cp, diffIn, diffOut){
+  const tO = entryTotals(O), tC = entryTotals(Cp);
+  const mapO = new Map(O.cs.map(x => [x.pn, x])), mapC = new Map(Cp.cs.map(x => [x.pn, x]));
+  const keys = [...new Set([...mapO.keys(), ...mapC.keys()])];
+  const related = (pn, g) => {
+    const out = [];
+    const touch = (r) => r && r.pn === pn && r.L === g;
+    diffIn.forEach(d => { if(touch(d.o) || touch(d.c)) out.push({d, tab:"IN"}); });
+    diffOut.forEach(d => { if(touch(d.o) || touch(d.c)) out.push({d, tab:"OUT"}); });
+    return out;
+  };
+  const rows = [], onlyO = [], onlyC = [];
+  for(const k of keys){
+    const o = mapO.get(k), c = mapC.get(k);
+    if(!o){ onlyC.push(c); continue; } if(!c){ onlyO.push(o); continue; }
+    for(const g of GODOWNS){
+      if(near(o[g], c[g])) continue;
+      const eo = tO.get(o.pl) || {WH:0,BB2:0,BB1:0}, ec = tC.get(c.pl) || {WH:0,BB2:0,BB1:0};
+      const explained = near(o[g] - c[g], eo[g] - ec[g]);
+      const rel = related(k, g);
+      let why = "unexplained";
+      if(explained && rel.length) why = rel.every(x => x.d.kind === "newerO" || x.d.kind === "newerC") ? "behind" : "entries";
+      else if(explained) why = "entries";
+      rows.push({name:o.name, cat:o.cat || c.cat, g, o:o[g], c:c[g], diff:r2(o[g] - c[g]), why, rel, rO:o.r, rC:c.r});
+    }
+  }
+  const rank = {unexplained:0, entries:1, behind:2};
+  rows.sort((a,b) => rank[a.why] - rank[b.why]);
+  return {rows, onlyO, onlyC};
+}
+
+function compareHelper(O, Cp){
+  const mO = new Map(), mC = new Map();
+  O.helper.forEach(x => { if(!mO.has(x.pn)) mO.set(x.pn, x); });
+  Cp.helper.forEach(x => { if(!mC.has(x.pn)) mC.set(x.pn, x); });
+  const onlyO = [...mO.values()].filter(x => !mC.has(x.pn));
+  const onlyC = [...mC.values()].filter(x => !mO.has(x.pn));
+  const catDiff = [...mO.values()].filter(x => mC.has(x.pn) && normName(x.cat) !== normName(mC.get(x.pn).cat)).map(x => ({o:x, c:mC.get(x.pn)}));
+  const nameCase = [...mO.values()].filter(x => mC.has(x.pn) && x.name !== mC.get(x.pn).name).map(x => ({o:x, c:mC.get(x.pn)}));
+  return {onlyO, onlyC, catDiff, nameCase};
+}
+
+/* =====================================================================
+   5. HEALTH CHECKS INSIDE EACH FILE
+   ===================================================================== */
+function healthOf(fAll, fromDs){
+  const keep = r => fromDs == null || r.ds == null || r.ds >= fromDs;
+  const f = fromDs == null ? fAll : {...fAll, in: fAll.in.filter(keep), out: fAll.out.filter(keep)};
+  const issues = [];
+  const add = (sev, code, title, explain, rows, cols) => { if(rows.length) issues.push({sev, code, title, explain, rows, cols}); };
+  const csNames = new Set(f.cs.map(x => x.pl));
+  const csTrim = new Set(f.cs.map(x => x.pn));
+  const logs = [...f.in.map(r => ({...r, tab:"STOCK IN"})), ...f.out.map(r => ({...r, tab:"STOCK OUT"}))];
+  const logCols = ["tab","r","date","product","qtyShow","loc","type"];
+  add("red","qtyText","Quantity typed as text — not counted",
+    "The sheet ignores these rows when it adds up Current Stock. Type only the number in QTY (no units, no ` mark).",
+    logs.filter(r => r.qtyText != null && r.product.trim()), logCols);
+  add("red","unknown","Product name not in Current Stock — not counted",
+    "These names don't match any product in CURRENT STOCK, so the quantity never reaches stock. Pick the name from the dropdown.",
+    groupByName(logs.filter(r => r.product.trim() && !csNames.has(r.pl)), csTrim), ["product","count","rowsList","hint"]);
+  add("red","locBad","Godown missing or wrong — not counted",
+    "Location must be exactly WH, BB2 or BB1.",
+    logs.filter(r => r.product.trim() && !GODOWNS.includes(r.loc.toUpperCase())), logCols);
+  add("amber","qtyDate","Quantity shows as a date",
+    "The cell is formatted as a date, so it shows as a date in the sheet. It still counts as the number shown here. Change the cell format to Number.",
+    logs.filter(r => r.qtyDateFmt), logCols);
+  add("amber","qtyBlank","Quantity is blank",
+    "The row has a product but no quantity.",
+    logs.filter(r => r.product.trim() && r.qty == null && r.qtyText == null), logCols);
+  add("amber","qtyNeg","Quantity is negative or zero",
+    "Stock In and Stock Out quantities should be positive numbers.",
+    logs.filter(r => r.qty != null && r.qty <= 0), logCols);
+  add("amber","dateBad","Date missing or not a real date",
+    "Enter the date as DD-MM-YYYY.",
+    logs.filter(r => r.ds == null), logCols);
+  add("amber","dateOdd","Date looks out of place",
+    "This date is far from the dates of the rows around it. Often a typing slip, like 01-07 instead of 07-01, or the wrong month.",
+    oddDates(f.in, "STOCK IN").concat(oddDates(f.out, "STOCK OUT")), logCols);
+  add("amber","typeBad","Type is blank or unusual",
+    "Stock In types: Opening balance, Production, Transfer in, Return, Purchase, Stock Correction. Stock Out types: Sales, Transfer Out, Usage, Stock correction.",
+    logs.filter(r => r.product.trim() && !(r.tab === "STOCK IN" ? IN_TYPES : OUT_TYPES).includes(r.T)), logCols);
+  add("amber","transfer","Transfer in and Transfer Out don't balance",
+    "For this date and product, Transfer in (Stock In) and Transfer Out (Stock Out) are not the same total. Normal if goods came from or went to another branch; otherwise one side is missing or has a different date.",
+    transfers(f), ["date","product","tin","tout","gap"]);
+  // current stock and helper
+  const totals = entryTotals(fAll);
+  const csRows = [];
+  f.cs.forEach(x => { const e = totals.get(x.pl) || {WH:0,BB2:0,BB1:0};
+    GODOWNS.forEach(g => { if(!near(x[g], e[g])) csRows.push({r:x.r, product:x.name, g, shown:x[g], calc:r2(e[g])}); }); });
+  add("red","csCalc","Current Stock doesn't match the entries",
+    "Current Stock should equal all Stock In minus all Stock Out for that product and godown. If you see this, the formula or the download is out of date.",
+    csRows, ["r","product","g","shown","calc"]);
+  add("amber","total","Total Stock ≠ WH + BB2 + BB1",
+    "The Total column doesn't equal the sum of the three godowns.",
+    f.cs.filter(x => x.hasTotal && !near(x.total, x.WH + x.BB2 + x.BB1)).map(x => ({r:x.r, product:x.name, WH:x.WH, BB2:x.BB2, BB1:x.BB1, total:x.total})), ["r","product","WH","BB2","BB1","total"]);
+  const hp = new Set(f.helper.map(x => x.pn));
+  add("amber","csNoHelper","In Current Stock but not in Helper Sheet",
+    "These products are missing from the Helper Sheet, so they won't appear in the entry dropdown.",
+    f.cs.filter(x => !hp.has(x.pn)).map(x => ({r:x.r, product:x.name, cat:x.cat})), ["r","product","cat"]);
+  add("amber","helperNoCs","In Helper Sheet but not in Current Stock",
+    "These products can be picked in the dropdown, but Current Stock has no row for them.",
+    f.helper.filter(x => !csTrim.has(x.pn)).map(x => ({r:x.r, product:x.name, cat:x.cat})), ["r","product","cat"]);
+  add("amber","dup","Product listed twice",
+    "The same product name appears on more than one row.",
+    dups(f.cs, "CURRENT STOCK").concat(dups(f.helper, "HELPER SHEET")), ["tab","product","rowsList"]);
+  const order = {red:0, amber:1};
+  issues.sort((a,b) => order[a.sev] - order[b.sev]);
+  return issues;
+}
+function groupByName(rows, csTrim){
+  const m = new Map();
+  rows.forEach(r => { const k = r.product; if(!m.has(k)) m.set(k, {product:k, count:0, rows:[]}); const e = m.get(k); e.count++; e.rows.push((r.tab === "STOCK IN" ? "IN " : "OUT ") + r.r); });
+  return [...m.values()].sort((a,b) => b.count - a.count).map(e => ({...e, rowsList: e.rows.slice(0,6).join(", ") + (e.rows.length > 6 ? " +" + (e.rows.length - 6) + " more" : ""),
+    hint: csTrim.has(normName(e.product)) ? "Extra space in the name" : ""}));
+}
+function oddDates(list, tab){
+  const out = [];
+  for(let i = 0; i < list.length; i++){
+    const r = list[i]; if(r.ds == null) continue;
+    const nb = [];
+    for(let j = Math.max(0, i - 6); j <= Math.min(list.length - 1, i + 6); j++){ if(j !== i && list[j].ds != null) nb.push(list[j].ds); }
+    if(nb.length < 4) continue;
+    nb.sort((a,b) => a - b); const med = nb[Math.floor(nb.length / 2)];
+    if(Math.abs(r.ds - med) > 20) out.push({...r, tab, note: "Rows around it: " + serialToStr(med)});
+  }
+  return out;
+}
+function transfers(f){
+  const m = new Map();
+  const add = (r, side) => { if(r.qty == null || r.ds == null) return; const k = r.ds + "|" + r.pn; if(!m.has(k)) m.set(k, {ds:r.ds, product:r.product, tin:0, tout:0}); m.get(k)[side] += r.qty; };
+  f.in.filter(r => r.T === "transfer in").forEach(r => add(r, "tin"));
+  f.out.filter(r => r.T === "transfer out").forEach(r => add(r, "tout"));
+  return [...m.values()].filter(e => !near(e.tin, e.tout)).map(e => ({...e, date: serialToStr(e.ds), gap: r2(e.tin - e.tout)})).sort((a,b) => a.ds - b.ds);
+}
+function dups(list, tab){
+  const m = new Map(); list.forEach(x => { if(!m.has(x.pn)) m.set(x.pn, []); m.get(x.pn).push(x); });
+  return [...m.values()].filter(a => a.length > 1).map(a => ({tab, product:a[0].name, rowsList:"rows " + a.map(x => x.r).join(", ")}));
+}
+
+/* =====================================================================
+   6. RUN
+   ===================================================================== */
+function runAll(O, Cp, fromDs){
+  const keep = r => fromDs == null || r.ds == null || r.ds >= fromDs;
+  const dIn = compareLogs(O.in.filter(keep), Cp.in.filter(keep), O.last, Cp.last);
+  const dOut = compareLogs(O.out.filter(keep), Cp.out.filter(keep), O.last, Cp.last);
+  const stock = compareStock(O, Cp, dIn, dOut);
+  const helper = compareHelper(O, Cp);
+  return {O, C:Cp, dIn, dOut, stock, helper, hO: healthOf(O, fromDs), hC: healthOf(Cp, fromDs), at: new Date(), fromDs};
+}
+
+/* ---------- paste-ready rows: entries missing in one sheet, laid out in the other sheet's column order ---------- */
+function pasteRows(key, to){
+  const R = S.R, list = key === "in" ? R.dIn : R.dOut;
+  const kinds = to === "O" ? ["onlyC","newerC"] : ["onlyO","newerO"];
+  const tf = to === "O" ? R.O : R.C, C = tf.cols[key];
+  const rows = list.filter(d => kinds.includes(d.kind)).map(d => to === "O" ? d.c : d.o)
+    .sort((a,b) => (a.ds ?? 1e9) - (b.ds ?? 1e9) || a.r - b.r);
+  const idx = [C.date, C.prod, C.qty, C.loc, C.type].filter(i => i >= 0);
+  const width = Math.max(...idx) + 1, first = Math.min(...idx);
+  const text = rows.map(r => {
+    const a = new Array(width).fill("");
+    a[C.date] = r.ds != null ? serialToStr(r.ds) : r.dateText;
+    a[C.prod] = tf.canon.get(r.pn) || r.product.trim();
+    a[C.qty] = r.qty != null ? String(r.qty) : (r.qtyText || "");
+    a[C.loc] = r.L;
+    if(C.type >= 0) a[C.type] = r.type;
+    return a.slice(first).join("\t");
+  }).join("\n");
+  return {n: rows.length, text, col: String.fromCharCode(65 + first)};
+}
+const TABLBL = {in:"STOCK IN", out:"STOCK OUT"}, SHEETLBL = {O:"Original", C:"Entry copy"};
+async function copyPaste(key, to){
+  const p = pasteRows(key, to);
+  if(!p.n){ toast("Nothing to copy"); return; }
+  await copyText(p.text, $("#copyBox"));
+  toast(`${p.n} rows copied — paste in ${SHEETLBL[to]} › ${TABLBL[key]}, column ${p.col} of the first empty row`);
+}
+function countKinds(list){ const c = {}; list.forEach(d => c[d.kind] = (c[d.kind] || 0) + 1); return c; }
+
+/* =====================================================================
+   7. UI
+   ===================================================================== */
+const S = {files:{O:null, C:null}, status:{O:"", C:""}, busy:false, R:null, view:"load", fromText:"", fromDs:null, fromErr:"",
+  filt:{in:{kinds:null, q:"", date:null}, out:{kinds:null, q:"", date:null}, stock:{why:null, q:""}, health:"O"}};
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = n => n == null ? "" : (Math.round(n * 100) / 100).toLocaleString("en-IN");
+const ICON = {
+  load:'<path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/>',
+  summary:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
+  in:'<path d="M12 19V5m0 14l-5-5m5 5l5-5"/>',
+  out:'<path d="M12 5v14m0-14l-5 5m5-5l5 5"/>',
+  stock:'<path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4M3 17l9 4 9-4"/>',
+  helper:'<path d="M8 6h13M8 12h13M8 18h13"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>',
+  health:'<path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0112 6a5.5 5.5 0 019.5 6c-2.5 4.5-9.5 9-9.5 9z"/><path d="M8 12h2l1.5-2.5L13 14l1.5-2H16"/>',
+  copy:'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/>',
+  check:'<path d="M5 12.5l4.5 4.5L19 7"/>', alert:'<path d="M12 8v5m0 3.5v.01"/><path d="M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/>',
+  swap:'<path d="M7 7h12l-3-3M17 17H5l3 3"/>', chev:'<path d="M9 6l6 6-6 6"/>'
+};
+const ic = (k, sz = 19) => `<svg viewBox="0 0 24 24" width="${sz}" height="${sz}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg>`;
+
+function toast(msg){ const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2200); }
+async function copyText(text, box){
+  try{ await navigator.clipboard.writeText(text); toast("Copied"); }
+  catch(e){ if(box){ box.hidden = false; box.value = text; box.focus(); box.select(); toast("Press Ctrl+C to copy"); } }
+}
+
+/* ---------- nav ---------- */
+function renderNav(){
+  const R = S.R;
+  const k = list => list ? list.filter(d => !d.kind.startsWith("newer")).length : 0;
+  const items = [
+    ["load","Load files", null],
+    ["summary","Summary", null],
+    ["in","Stock In", R ? k(R.dIn) : null],
+    ["out","Stock Out", R ? k(R.dOut) : null],
+    ["stock","Current Stock", R ? R.stock.rows.filter(r => r.why !== "behind").length + R.stock.onlyO.length + R.stock.onlyC.length : null],
+    ["helper","Helper Sheet", R ? R.helper.onlyO.length + R.helper.onlyC.length + R.helper.catDiff.length : null],
+    ["health","Sheet health", R ? R.hO.filter(i => i.sev === "red").length + R.hC.filter(i => i.sev === "red").length : null]
+  ];
+  $("#nav").innerHTML = items.map(([id, label, n]) => {
+    const dis = !R && id !== "load";
+    const cnt = n == null ? "" : `<span class="cnt ${n ? "bad" : "ok"}">${n ? n : "✓"}</span>`;
+    return `<button data-v="${id}" class="${S.view === id ? "on" : ""}" ${dis ? "disabled" : ""} title="${label}">${ic(id)}<span class="lbl">${label}</span>${cnt}</button>`;
+  }).join("");
+}
+$("#nav").addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if(!b || b.disabled) return; go(b.dataset.v); });
+function go(v){ S.view = v; render(); window.scrollTo({top:0}); }
+
+/* ---------- theme + collapse ---------- */
+function setTheme(t){
+  if(t === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", t);
+  document.querySelectorAll("#themeSeg button").forEach(b => b.classList.toggle("on", b.dataset.t === t));
+  try{ localStorage.setItem("ims-check-theme", t); }catch(e){}
+}
+$("#themeSeg").addEventListener("click", e => { const b = e.target.closest("button"); if(b) setTheme(b.dataset.t); });
+$("#collapseBtn").addEventListener("click", () => { $("#app").classList.toggle("collapsed"); try{ localStorage.setItem("ims-check-col", $("#app").classList.contains("collapsed") ? "1" : ""); }catch(e){} });
+try{ setTheme(localStorage.getItem("ims-check-theme") || "auto"); if(localStorage.getItem("ims-check-col")) $("#app").classList.add("collapsed"); }catch(e){ setTheme("auto"); }
+
+/* ---------- views ---------- */
+function render(){
+  renderNav();
+  const v = S.view, el = $("#view");
+  if(v === "load") el.innerHTML = viewLoad();
+  else if(v === "summary") el.innerHTML = viewSummary();
+  else if(v === "in" || v === "out") el.innerHTML = viewLog(v);
+  else if(v === "stock") el.innerHTML = viewStock();
+  else if(v === "helper") el.innerHTML = viewHelper();
+  else if(v === "health") el.innerHTML = viewHealth();
+  bindView();
+}
+
+function staleNote(f){
+  if(!f || f.last == null) return "";
+  const days = todaySerial() - f.last;
+  return days > 3 ? `<span class="warnline">Last entry is ${days} days old — is this an old download?</span>` : "";
+}
+function fileCardInfo(f){
+  if(!f) return "";
+  return `<div class="meta">${f.in.length.toLocaleString("en-IN")} Stock In rows · ${f.out.length.toLocaleString("en-IN")} Stock Out rows · ${f.cs.length} products · last entry <b>${f.last != null ? serialToStr(f.last) : "—"}</b></div>${staleNote(f)}`;
+}
+function lastCheckLine(){
+  let L = null; try{ L = JSON.parse(localStorage.getItem("ims-check-last") || "null"); }catch(e){}
+  if(!L) return "";
+  return `<span class="lastcheck">Last check on this computer: <b>${esc(L.when)}</b> — ${L.real ? `<b>${L.real}</b> to fix` : "sheets matched"}${L.newer ? `, ${L.newer} entries only in one sheet` : ""}${L.from ? ` (from ${esc(L.from)})` : ""}.</span>`;
+}
+function viewLoad(){
+  const slot = (k, tag, hint) => {
+    const f = S.files[k], st = S.status[k];
+    return `<label class="drop ${f ? "has" : ""}" data-slot="${k}">
+      <span class="tag">${tag}</span>
+      ${f ? `<span class="fname">${esc(f.fileName)}</span>${fileCardInfo(f)}` : `<span class="fname">Drop the .xlsx here</span><span class="hint">${hint}</span>`}
+      ${st ? `<span class="${st.startsWith("!") ? "err" : "ok"}">${esc(st.replace(/^!/,""))}</span>` : ""}
+      <input type="file" id="file-${k}" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple aria-label="${tag} file">
+    </label>`;
+  };
+  return `
+  <div class="head"><div><h1>Compare the two IMS sheets</h1>
+    <p class="sub">Download both Google Sheets as Excel (File → Download → Microsoft Excel .xlsx) and drop them below. You can drop both files at once; the tool works out which one is the Entry copy. Nothing is uploaded — the files are read only on this computer.</p></div></div>
+  <div class="drops">
+    ${slot("O","Original IMS sheet (MIS)","IMS Stock Register (WH, BB2, BB1)")}
+    ${slot("C","Entry copy","IMS Stock Entry – the copy the entry tool writes to")}
+  </div>
+  <div class="card pad"><div class="fromrow"><label for="fromDate"><b>Check entries from</b></label>
+    <input id="fromDate" inputmode="numeric" placeholder="DD-MM-YYYY" value="${esc(S.fromText)}" aria-describedby="fromHelp">
+    <span class="note" id="fromHelp">Optional. Leave empty to check every entry. Current Stock always uses all entries.</span>
+    ${S.fromErr ? `<span class="err" style="color:var(--red);font-weight:700;font-size:13px">${esc(S.fromErr)}</span>` : ""}</div>
+    ${lastCheckLine() ? `<div style="margin-top:10px">${lastCheckLine()}</div>` : ""}</div>
+  <div class="row-actions">
+    ${S.busy ? `<div class="busy"><span class="spin"></span>Reading and comparing…</div>` :
+      `<button class="btn primary" id="runBtn" ${S.files.O && S.files.C ? "" : "disabled"}>${ic("check",16)} Compare now</button>
+       <button class="btn" id="swapBtn" ${S.files.O || S.files.C ? "" : "disabled"}>${ic("swap",16)} Swap files</button>`}
+  </div>
+  <div class="card pad"><h3>What gets checked</h3>
+    <div class="what" style="margin-top:12px">
+      <div><b>Stock In &amp; Stock Out</b><span>Every entry is matched across both sheets. You see what is missing, and entries where only the name, qty, godown, type or date differs.</span></div>
+      <div><b>Current Stock</b><span>WH, BB2 and BB1 for each product, and which entry differences explain each gap.</span></div>
+      <div><b>Helper Sheet</b><span>Products missing from either sheet, and products filed under a different category.</span></div>
+      <div><b>Sheet health</b><span>Problems inside each sheet: text quantities, unknown names, odd dates, one-sided transfers.</span></div>
+    </div>
+  </div>`;
+}
+
+function verdictOf(R){
+  const kIn = countKinds(R.dIn), kOut = countKinds(R.dOut);
+  const real = l => l.filter(d => !d.kind.startsWith("newer")).length;
+  const newer = l => l.filter(d => d.kind.startsWith("newer")).length;
+  const realAll = real(R.dIn) + real(R.dOut) + R.stock.rows.filter(r => r.why !== "behind").length + R.stock.onlyO.length + R.stock.onlyC.length + R.helper.onlyO.length + R.helper.onlyC.length + R.helper.catDiff.length;
+  const newerAll = newer(R.dIn) + newer(R.dOut);
+  return {kIn, kOut, realIn: real(R.dIn), realOut: real(R.dOut), newerIn: newer(R.dIn), newerOut: newer(R.dOut), realAll, newerAll};
+}
+function dateLine(R){
+  const o = R.O.last, c = R.C.last;
+  if(o == null || c == null) return "";
+  if(o === c) return `Both sheets have entries up to <b>${serialToStr(o)}</b>.`;
+  const behind = o > c ? "Entry copy" : "Original", ahead = o > c ? "Original" : "Entry copy";
+  const days = Math.abs(o - c);
+  return `${ahead} has entries up to <b>${serialToStr(Math.max(o,c))}</b>; ${behind} stops at <b>${serialToStr(Math.min(o,c))}</b> (${days} day${days === 1 ? "" : "s"} behind).`;
+}
+function viewSummary(){
+  const R = S.R, V = verdictOf(R);
+  const ok = V.realAll === 0;
+  const vcls = ok ? (V.newerAll ? "warn" : "ok") : "bad";
+  const vtitle = ok ? (V.newerAll ? "Sheets match, but one is not up to date" : "Both sheets match") : "The sheets don't match";
+  const redO = R.hO.filter(i => i.sev === "red"), redC = R.hC.filter(i => i.sev === "red");
+  const fileCard = (f, tag) => `<div class="card fcard"><div class="top"><h3>${tag}</h3><span class="pill ${f.isCopy ? "p-blue" : "p-slate"}">${f.isCopy ? "Entry copy" : "Original"}</span></div>
+    <div class="nm">${esc(f.fileName)}</div>
+    <div class="kv"><div><span>Stock In</span><b>${f.in.length.toLocaleString("en-IN")}</b></div><div><span>Stock Out</span><b>${f.out.length.toLocaleString("en-IN")}</b></div>
+    <div><span>Products</span><b>${f.cs.length}</b></div><div><span>Last entry</span><b>${f.last != null ? serialToStr(f.last) : "—"}</b></div></div>${staleNote(f)}</div>`;
+  const ckLog = (key, label, list, real, newer) => {
+    const k = countKinds(list);
+    const lines = [];
+    if(k.onlyO) lines.push(`<li><b>${k.onlyO}</b> missing in Entry copy</li>`);
+    if(k.onlyC) lines.push(`<li><b>${k.onlyC}</b> missing in Original</li>`);
+    const mis = (k.name||0) + (k["case"]||0) + (k.qty||0) + (k.loc||0) + (k.type||0) + (k.date||0);
+    if(mis) lines.push(`<li><b>${mis}</b> entered differently</li>`);
+    if(newer) lines.push(`<li><b>${newer}</b> newer, not in the other sheet yet</li>`);
+    if(!lines.length) lines.push(`<li>Every entry matches</li>`);
+    return `<button class="card ck" data-go="${key}"><div class="t"><h3>${label}</h3>${real ? `<span class="pill p-red">${real} to fix</span>` : newer ? `<span class="pill p-slate">Up to date only</span>` : `<span class="pill p-green">Match</span>`}</div>
+      <div class="big">${real}</div><ul>${lines.join("")}</ul></button>`;
+  };
+  const st = R.stock, stReal = st.rows.filter(r => r.why !== "behind").length + st.onlyO.length + st.onlyC.length, stBehind = st.rows.filter(r => r.why === "behind").length;
+  const stUnexp = st.rows.filter(r => r.why === "unexplained").length;
+  const hp = R.helper, hpN = hp.onlyO.length + hp.onlyC.length + hp.catDiff.length;
+  // dates
+  const byDate = new Map();
+  [...R.dIn, ...R.dOut].forEach(d => { const r = d.o || d.c; const key = r.ds ?? -1; if(!byDate.has(key)) byDate.set(key, {o:0,c:0,x:0,n:0}); const e = byDate.get(key);
+    e[KIND[d.kind].bar]++; });
+  const dates = [...byDate.entries()].sort((a,b) => b[0] - a[0]);
+  const maxD = Math.max(1, ...dates.map(([,e]) => e.o + e.c + e.x + e.n));
+  const todo = buildTodo(R, V);
+  return `
+  <div class="head"><div><h1>Summary</h1><p class="sub">Checked ${R.at.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})}, ${serialToStr(todaySerial())}${R.fromDs != null ? ` · Stock In/Out from <b>${serialToStr(R.fromDs)}</b>` : ""}. Click any card to see the rows.</p></div>
+    <div class="row-actions"><button class="btn" id="copyReport">${ic("copy",16)} Copy report</button><button class="btn" data-go="load">${ic("load",16)} Load new files</button></div></div>
+  <textarea class="copybox" id="copyBox" hidden aria-label="Report text"></textarea>
+  <div class="card verdict"><div class="vicon ${vcls}">${ic(ok ? "check" : "alert")}</div>
+    <div><h2>${vtitle}</h2><p>${dateLine(R)}${V.newerAll ? ` <b>${V.newerAll}</b> entries after that date are only in one sheet — that part is expected.` : ""}</p>
+    ${ok ? "" : `<p><b>${V.realIn + V.realOut}</b> Stock In/Out entries need a look. Below is what to fix first.</p>`}</div></div>
+  <div class="files">${fileCard(R.O,"Original IMS sheet")}${fileCard(R.C,"Entry copy")}</div>
+  <div class="checks">
+    ${ckLog("in","Stock In", R.dIn, V.realIn, V.newerIn)}
+    ${ckLog("out","Stock Out", R.dOut, V.realOut, V.newerOut)}
+    <button class="card ck" data-go="stock"><div class="t"><h3>Current Stock</h3>${stReal ? `<span class="pill p-red">${stReal} to fix</span>` : stBehind ? `<span class="pill p-slate">Up to date only</span>` : `<span class="pill p-green">Match</span>`}</div>
+      <div class="big">${stReal}</div><ul>
+      ${st.rows.length ? `<li><b>${st.rows.length}</b> godown figures differ</li>` : `<li>All WH, BB2, BB1 figures match</li>`}
+      ${stBehind ? `<li><b>${stBehind}</b> only because the copy is behind</li>` : ""}
+      ${stUnexp ? `<li><b>${stUnexp}</b> not explained by entries</li>` : ""}
+      ${st.onlyO.length ? `<li><b>${st.onlyO.length}</b> products only in Original</li>` : ""}${st.onlyC.length ? `<li><b>${st.onlyC.length}</b> products only in Entry copy</li>` : ""}</ul></button>
+    <button class="card ck" data-go="helper"><div class="t"><h3>Helper Sheet</h3>${hpN ? `<span class="pill p-red">${hpN} to fix</span>` : `<span class="pill p-green">Match</span>`}</div>
+      <div class="big">${hpN}</div><ul>
+      <li><b>${R.O.helper.length}</b> vs <b>${R.C.helper.length}</b> products</li>
+      ${hp.onlyO.length ? `<li><b>${hp.onlyO.length}</b> only in Original</li>` : ""}${hp.onlyC.length ? `<li><b>${hp.onlyC.length}</b> only in Entry copy</li>` : ""}
+      ${hp.catDiff.length ? `<li><b>${hp.catDiff.length}</b> in a different category</li>` : ""}${!hpN ? "<li>Same products, same categories</li>" : ""}</ul></button>
+  </div>
+  <div class="two">
+    <div class="card pad"><h2>What to do</h2>${todo.length ? `<ol class="todo">${todo.map(t => `<li><div><b>${t[0]}</b><br><span>${t[1]}</span></div></li>`).join("")}</ol>` : `<p class="note" style="margin-top:10px">Nothing to fix. Both sheets agree.</p>`}</div>
+    <div class="card pad"><h2>Differences by date</h2><p class="note" style="margin:4px 0 0">Stock In and Stock Out together. Click a date to see its rows.</p>
+      <div class="legend"><span><i style="background:var(--red)"></i>Missing in copy</span><span><i style="background:var(--blue)"></i>Missing in Original</span><span><i style="background:var(--amber)"></i>Entered differently</span><span><i style="background:var(--faint)"></i>Not in other sheet yet</span></div>
+      <div class="dates">${dates.length ? dates.map(([ds,e]) => { const tot = e.o + e.c + e.x + e.n; const w = v => (v / maxD * 100).toFixed(2) + "%";
+        return `<button class="drow" data-date="${ds}"><span class="d">${ds < 0 ? "No date" : serialToStr(ds)}</span><span class="bar"><i class="o" style="width:${w(e.o)}"></i><i class="c" style="width:${w(e.c)}"></i><i class="x" style="width:${w(e.x)}"></i><i class="n" style="width:${w(e.n)}"></i></span><span class="n2">${tot}</span></button>`; }).join("") : `<p class="note">No differences.</p>`}</div>
+    </div>
+  </div>
+  ${pasteCard()}
+  <div class="card pad"><div class="head"><div><h2>Sheet health</h2><p class="sub">Problems inside each sheet that make Current Stock wrong, even when both sheets agree.</p></div><button class="btn" data-go="health">Open sheet health ${ic("chev",16)}</button></div>
+    <div class="files" style="margin-top:14px">
+      ${[["Original", R.hO],["Entry copy", R.hC]].map(([n, h]) => `<div><h3 style="margin-bottom:8px">${n}</h3>${h.length ? `<div style="display:flex;flex-direction:column;gap:6px">${h.slice(0,6).map(i => `<div style="display:flex;gap:8px;align-items:center;justify-content:space-between"><span style="font-size:13.5px">${esc(i.title)}</span><span class="pill ${i.sev === "red" ? "p-red" : "p-amber"}">${i.rows.length}</span></div>`).join("")}${h.length > 6 ? `<span class="note">+${h.length - 6} more checks</span>` : ""}</div>` : `<span class="pill p-green">No problems found</span>`}</div>`).join("")}
+    </div></div>`;
+}
+function pasteCard(){
+  const box = (key, to) => { const p = pasteRows(key, to);
+    return `<div class="card"><span class="note">${TABLBL[key]} → ${SHEETLBL[to]}</span><b>${p.n} row${p.n === 1 ? "" : "s"}</b>
+      <span class="note">${p.n ? `Paste in column ${p.col} of the first empty row.` : "Nothing missing."}</span>
+      <button class="btn ${p.n ? "primary" : ""}" data-paste="${key}|${to}" ${p.n ? "" : "disabled"}>${ic("copy",16)} Copy rows</button></div>`; };
+  return `<div class="card pad"><h2>Paste-ready rows</h2><p class="sub">Entries that are only in one sheet, laid out in the other sheet's column order (date as DD-MM-YYYY). Check them before you paste — an entry only in one sheet can also be a mistake.</p>
+    <div class="paste">${box("in","O")}${box("out","O")}${box("in","C")}${box("out","C")}</div></div>`;
+}
+function buildTodo(R, V){
+  const t = [];
+  const kI = countKinds(R.dIn), kO = countKinds(R.dOut);
+  const n = (k, key) => (k[key] || 0);
+  const behind = R.O.last != null && R.C.last != null && R.O.last !== R.C.last;
+  if(n(kI,"onlyO") + n(kO,"onlyO")) t.push([`Add ${n(kI,"onlyO") + n(kO,"onlyO")} missing entries to the Entry copy`, `${n(kI,"onlyO")} Stock In and ${n(kO,"onlyO")} Stock Out rows exist in the Original but not in the copy (dated on or before the copy's last entry).`]);
+  if(n(kI,"onlyC") + n(kO,"onlyC")) t.push([`Check ${n(kI,"onlyC") + n(kO,"onlyC")} entries that are only in the Entry copy`, `Add them to the Original, or remove them from the copy if they were a mistake.`]);
+  const mis = ["name","case","qty","loc","type","date"].map(k => [k, n(kI,k) + n(kO,k)]).filter(x => x[1]);
+  if(mis.length) t.push([`Fix ${mis.reduce((s,x) => s + x[1], 0)} entries entered differently`, mis.map(([k,v]) => `${v} ${KIND[k].short.toLowerCase()}`).join(", ") + ". Decide which sheet is right and correct the other."]);
+  if(behind && V.newerAll) t.push([`Bring the ${R.O.last > R.C.last ? "Entry copy" : "Original"} up to ${serialToStr(Math.max(R.O.last, R.C.last))}`, `${V.newerAll} newer entries are only in one sheet. After they are added, ${R.stock.rows.filter(r => r.why === "behind").length} Current Stock gaps will close by themselves.`]);
+  const unexp = R.stock.rows.filter(r => r.why === "unexplained").length;
+  if(unexp) t.push([`Look at ${unexp} Current Stock figures the entries don't explain`, `Usually the Current Stock formula or the download is out of date.`]);
+  if(R.stock.onlyO.length + R.stock.onlyC.length + R.helper.onlyO.length + R.helper.onlyC.length) t.push([`Add missing products`, `${R.helper.onlyO.length} Helper Sheet products only in Original, ${R.helper.onlyC.length} only in Entry copy; ${R.stock.onlyO.length} Current Stock products only in Original, ${R.stock.onlyC.length} only in Entry copy.`]);
+  if(R.helper.catDiff.length) t.push([`Match ${R.helper.catDiff.length} product categories`, `The same product is under a different category in each Helper Sheet.`]);
+  const red = [...R.hO.map(i => ["Original", i]), ...R.hC.map(i => ["Entry copy", i])].filter(x => x[1].sev === "red");
+  if(red.length) t.push([`Fix entries the sheets are not counting`, red.map(([f,i]) => `${f}: ${i.rows.length} × ${i.title.split(" — ")[0].toLowerCase()}`).join("; ") + "."]);
+  return t;
+}
+
+/* ---------- Stock In / Out ---------- */
+function cellPair(d, field, render){
+  const a = d.o ? render(d.o) : "", b = d.c ? render(d.c) : "";
+  if(!d.o || !d.c) return esc(a || b);
+  if(String(a) === String(b)) return esc(a);
+  return `<div class="two-val"><span><small>O</small><span class="diffv">${esc(a)}</span></span><span><small>C</small><span class="diffv">${esc(b)}</span></span></div>`;
+}
+const showQty = r => r.qty != null ? fmt(r.qty) : (r.qtyText != null ? r.qtyText : "—");
+const showDate = r => r.ds != null ? serialToStr(r.ds) : (r.dateText || "—");
+function viewLog(key){
+  const R = S.R, list = key === "in" ? R.dIn : R.dOut, F = S.filt[key], title = key === "in" ? "Stock In" : "Stock Out";
+  const counts = countKinds(list);
+  const order = ["onlyO","onlyC","name","case","qty","loc","type","date","newerO","newerC"].filter(k => counts[k]);
+  const kinds = F.kinds;
+  const q = normName(F.q);
+  const rows = list.filter(d => (!kinds || kinds.includes(d.kind)) && (F.date == null || ((d.o || d.c).ds ?? -1) === F.date) && (!q || (d.o && d.o.pn.includes(q)) || (d.c && d.c.pn.includes(q))));
+  const LIMIT = 800;
+  return `<div class="head"><div><h1>${title}</h1><p class="sub">Each row is one entry that is not the same in both sheets. <b>O</b> = Original, <b>C</b> = Entry copy. Row numbers are the sheet row numbers, so you can go straight to them.</p></div>
+    <div class="row-actions">${(() => { const a = pasteRows(key, "O").n, b = pasteRows(key, "C").n;
+      return (a ? `<button class="btn" data-paste="${key}|O">${ic("copy",16)} Copy ${a} rows for Original</button>` : "") + (b ? `<button class="btn" data-paste="${key}|C">${ic("copy",16)} Copy ${b} rows for Entry copy</button>` : ""); })()}
+      <button class="btn" id="copyTable">${ic("copy",16)} Copy table</button></div></div>
+  <textarea class="copybox" id="copyBox" hidden aria-label="Table text"></textarea>
+  <div class="card">
+    <div class="toolbar">
+      <div class="chips">
+        <button class="chip ${!kinds ? "on" : ""}" data-kind="all">All <em>${list.length}</em></button>
+        ${order.map(k => `<button class="chip ${kinds && kinds.includes(k) ? "on" : ""}" data-kind="${k}" title="${esc(KIND[k].help)}">${KIND[k].short} <em>${counts[k]}</em></button>`).join("")}
+        ${F.date != null ? `<button class="chip datechip" data-cleardate="1">Date ${F.date < 0 ? "none" : serialToStr(F.date)} ✕</button>` : ""}
+      </div>
+      <input class="search" id="q-${key}" type="search" placeholder="Search product…" value="${esc(F.q)}" aria-label="Search product">
+    </div>
+    ${rows.length ? `<div class="tbl-wrap"><table><thead><tr><th>What</th><th>Date</th><th>Product</th><th class="num">Qty</th><th>Godown</th><th>Type</th><th>Row O</th><th>Row C</th></tr></thead><tbody>
+      ${rows.slice(0, LIMIT).map(d => `<tr><td><span class="pill ${KIND[d.kind].cls}" title="${esc(KIND[d.kind].help)}">${KIND[d.kind].short}</span></td>
+        <td>${cellPair(d, "date", showDate)}</td><td class="prod">${cellPair(d, "p", r => r.product)}</td><td class="num">${cellPair(d, "q", showQty)}</td>
+        <td>${cellPair(d, "l", r => r.loc)}</td><td>${cellPair(d, "t", r => r.type)}</td>
+        <td class="rown">${d.o ? d.o.r : "—"}</td><td class="rown">${d.c ? d.c.r : "—"}</td></tr>`).join("")}
+      </tbody></table></div>${rows.length > LIMIT ? `<div class="more">Showing the first ${LIMIT} of ${rows.length}. Use the filters or search to narrow down.</div>` : ""}`
+    : `<div class="empty"><b>${list.length ? "Nothing matches this filter" : "Every entry matches"}</b>${list.length ? "Clear the filter or search." : `All ${title} rows are the same in both sheets.`}</div>`}
+  </div>
+  <div class="card pad"><h3>What each label means</h3><div style="display:grid;gap:8px;margin-top:10px">${order.map(k => `<div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><span class="pill ${KIND[k].cls}">${KIND[k].short}</span><span class="note">${esc(KIND[k].help)}</span></div>`).join("") || `<span class="note">No differences.</span>`}</div></div>`;
+}
+
+/* ---------- Current Stock ---------- */
+const WHY = {
+  behind:{short:"Copy not updated yet", cls:"p-slate", help:"The whole gap comes from entries made after the other sheet's last entry. It closes once the sheet is brought up to date."},
+  entries:{short:"Entry differences", cls:"p-amber", help:"The gap is explained by Stock In/Out entries that differ. Fix those entries and this closes."},
+  unexplained:{short:"Not explained", cls:"p-red", help:"The entries don't explain this gap. The Current Stock formula or the download may be out of date."}
+};
+function viewStock(){
+  const R = S.R, st = R.stock, F = S.filt.stock, q = normName(F.q);
+  const counts = {}; st.rows.forEach(r => counts[r.why] = (counts[r.why] || 0) + 1);
+  const rows = st.rows.filter(r => (!F.why || r.why === F.why) && (!q || normName(r.name).includes(q)));
+  const relText = r => {
+    if(!r.rel.length) return "";
+    const ks = {}; r.rel.forEach(x => ks[x.tab + " · " + KIND[x.d.kind].short] = (ks[x.tab + " · " + KIND[x.d.kind].short] || 0) + 1);
+    return Object.entries(ks).map(([k,v]) => `${v} × ${k}`).join(", ");
+  };
+  return `<div class="head"><div><h1>Current Stock</h1><p class="sub">Stock at each godown, Original vs Entry copy. Difference = Original − Entry copy. The last column says which Stock In/Out differences cause the gap.</p></div>
+    <div class="row-actions"><button class="btn" id="copyTable">${ic("copy",16)} Copy table</button></div></div>
+  <textarea class="copybox" id="copyBox" hidden aria-label="Table text"></textarea>
+  <div class="card">
+    <div class="toolbar"><div class="chips">
+      <button class="chip ${!F.why ? "on" : ""}" data-why="">All <em>${st.rows.length}</em></button>
+      ${["unexplained","entries","behind"].filter(k => counts[k]).map(k => `<button class="chip ${F.why === k ? "on" : ""}" data-why="${k}" title="${esc(WHY[k].help)}">${WHY[k].short} <em>${counts[k]}</em></button>`).join("")}
+    </div><input class="search" id="q-stock" type="search" placeholder="Search product…" value="${esc(F.q)}" aria-label="Search product"></div>
+    ${rows.length ? `<div class="tbl-wrap"><table><thead><tr><th>Product</th><th>Godown</th><th class="num">Original</th><th class="num">Entry copy</th><th class="num">Difference</th><th>Why</th><th>Caused by</th><th>Row O / C</th></tr></thead><tbody>
+      ${rows.map(r => `<tr><td class="prod">${esc(r.name)}<div class="note">${esc(r.cat)}</div></td><td><b>${r.g}</b></td><td class="num">${fmt(r.o)}</td><td class="num">${fmt(r.c)}</td>
+        <td class="num ${r.diff < 0 ? "neg" : "pos"}"><b>${r.diff > 0 ? "+" : ""}${fmt(r.diff)}</b></td>
+        <td><span class="pill ${WHY[r.why].cls}" title="${esc(WHY[r.why].help)}">${WHY[r.why].short}</span></td><td class="note">${esc(relText(r))}</td><td class="rown">${r.rO} / ${r.rC}</td></tr>`).join("")}
+    </tbody></table></div>` : `<div class="empty"><b>${st.rows.length ? "Nothing matches this filter" : "All godown figures match"}</b>${st.rows.length ? "Clear the filter or search." : "WH, BB2 and BB1 are the same in both sheets for every product."}</div>`}
+  </div>
+  ${(st.onlyO.length || st.onlyC.length) ? `<div class="files">
+    ${[["Only in Original", st.onlyO],["Only in Entry copy", st.onlyC]].map(([t, l]) => `<div class="card"><div class="pad" style="padding-bottom:10px"><h3>${t} <span class="pill ${l.length ? "p-red" : "p-green"}">${l.length}</span></h3></div>
+      ${l.length ? `<div class="tbl-wrap" style="max-height:340px"><table><thead><tr><th>Row</th><th>Product</th><th>Category</th><th class="num">WH</th><th class="num">BB2</th><th class="num">BB1</th></tr></thead><tbody>${l.map(x => `<tr><td class="rown">${x.r}</td><td class="prod">${esc(x.name)}</td><td>${esc(x.cat)}</td><td class="num">${fmt(x.WH)}</td><td class="num">${fmt(x.BB2)}</td><td class="num">${fmt(x.BB1)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty" style="padding:16px">None</div>`}</div>`).join("")}
+  </div>` : ""}
+  <div class="card pad"><h3>What the labels mean</h3><div style="display:grid;gap:8px;margin-top:10px">${Object.values(WHY).map(w => `<div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><span class="pill ${w.cls}">${w.short}</span><span class="note">${esc(w.help)}</span></div>`).join("")}</div></div>`;
+}
+
+/* ---------- Helper ---------- */
+function viewHelper(){
+  const R = S.R, h = R.helper;
+  const block = (title, sub, list, cols) => `<div class="card"><div class="pad" style="padding-bottom:10px"><h3>${title} <span class="pill ${list.length ? "p-red" : "p-green"}">${list.length}</span></h3><p class="note" style="margin:4px 0 0">${sub}</p></div>
+    ${list.length ? `<div class="tbl-wrap" style="max-height:420px"><table><thead><tr>${cols.map(c => `<th>${c[0]}</th>`).join("")}</tr></thead><tbody>${list.map(x => `<tr>${cols.map(c => `<td class="${c[2] || ""}">${esc(c[1](x))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>` : `<div class="empty" style="padding:18px">None</div>`}</div>`;
+  return `<div class="head"><div><h1>Helper Sheet</h1><p class="sub">The product list behind the entry dropdown. Original has <b>${R.O.helper.length}</b> products, Entry copy has <b>${R.C.helper.length}</b>.</p></div></div>
+  <div class="files">
+    ${block("Only in Original","Add these to the Entry copy's Helper Sheet (and Current Stock).", h.onlyO, [["Row", x => x.r, "rown"],["Product", x => x.name, "prod"],["Category", x => x.cat]])}
+    ${block("Only in Entry copy","Add these to the Original, or remove them from the copy.", h.onlyC, [["Row", x => x.r, "rown"],["Product", x => x.name, "prod"],["Category", x => x.cat]])}
+  </div>
+  ${block("Different category","Same product, filed under a different category.", h.catDiff, [["Product", x => x.o.name, "prod"],["Original", x => x.o.cat],["Entry copy", x => x.c.cat],["Row O / C", x => x.o.r + " / " + x.c.r, "rown"]])}
+  ${h.nameCase.length ? block("Name spelled differently","Same product, but capital letters or spaces differ. Entries still count, but it's tidier to match.", h.nameCase, [["Original", x => x.o.name, "prod"],["Entry copy", x => x.c.name, "prod"],["Row O / C", x => x.o.r + " / " + x.c.r, "rown"]]) : ""}`;
+}
+
+/* ---------- Health ---------- */
+const COLDEF = {
+  tab:["Tab", r => r.tab], r:["Row", r => r.r, "rown"], date:["Date", r => r.date ?? showDate(r)], product:["Product", r => r.product, "prod"],
+  qtyShow:["Qty", r => showQty(r), "num"], loc:["Godown", r => r.loc || "—"], type:["Type", r => (r.type || "—") + (r.note ? " · " + r.note : "")],
+  count:["Rows", r => r.count, "num"], rowsList:["Where", r => r.rowsList, "rown"], hint:["Note", r => r.hint],
+  tin:["Transfer in", r => fmt(r.tin), "num"], tout:["Transfer Out", r => fmt(r.tout), "num"], gap:["In − Out", r => fmt(r.gap), "num"],
+  g:["Godown", r => r.g], shown:["Shown", r => fmt(r.shown), "num"], calc:["From entries", r => fmt(r.calc), "num"],
+  WH:["WH", r => fmt(r.WH), "num"], BB2:["BB2", r => fmt(r.BB2), "num"], BB1:["BB1", r => fmt(r.BB1), "num"], total:["Total", r => fmt(r.total), "num"], cat:["Category", r => r.cat]
+};
+function viewHealth(){
+  const R = S.R, which = S.filt.health, list = which === "O" ? R.hO : R.hC, f = which === "O" ? R.O : R.C;
+  return `<div class="head"><div><h1>Sheet health</h1><p class="sub">Problems inside one sheet. Red items are not counted in Current Stock at all. Amber items are counted but look wrong.</p></div>
+    <div class="fileTabs"><button class="chip ${which === "O" ? "on" : ""}" data-health="O">Original <em>${R.hO.length}</em></button><button class="chip ${which === "C" ? "on" : ""}" data-health="C">Entry copy <em>${R.hC.length}</em></button></div></div>
+  <div class="card">${list.length ? list.map(i => `<details class="issue"><summary><span class="pill ${i.sev === "red" ? "p-red" : "p-amber"}">${i.sev === "red" ? "Not counted" : "Check"}</span>
+      <div><div class="it">${esc(i.title)}</div><div class="ie">${esc(i.explain)}</div></div><span class="ic">${i.rows.length}</span><span class="chev">${ic("chev",18)}</span></summary>
+      <div class="body"><div class="tbl-wrap"><table><thead><tr>${i.cols.map(c => `<th class="${COLDEF[c][2] === "num" ? "num" : ""}">${COLDEF[c][0]}</th>`).join("")}</tr></thead><tbody>
+      ${i.rows.slice(0, 500).map(r => `<tr>${i.cols.map(c => `<td class="${COLDEF[c][2] || ""}">${esc(COLDEF[c][1](r))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+      ${i.rows.length > 500 ? `<div class="more">Showing 500 of ${i.rows.length}.</div>` : ""}</div></details>`).join("")
+    : `<div class="empty"><b>No problems found</b>${esc(f.fileName)} looks clean.</div>`}</div>`;
+}
+
+/* ---------- copy text ---------- */
+function reportText(){
+  const R = S.R, V = verdictOf(R), t = [];
+  t.push(`IMS SHEET CHECK — ${serialToStr(todaySerial())} (v${VERSION})`);
+  t.push(`Original: ${R.O.fileName} — last entry ${R.O.last != null ? serialToStr(R.O.last) : "-"}`);
+  t.push(`Entry copy: ${R.C.fileName} — last entry ${R.C.last != null ? serialToStr(R.C.last) : "-"}`);
+  t.push("");
+  t.push(V.realAll ? "RESULT: The sheets don't match." : "RESULT: The sheets match" + (V.newerAll ? " (one is not up to date)." : "."));
+  t.push(dateLine(R).replace(/<[^>]+>/g, ""));
+  const line = (nm, l) => { const k = countKinds(l); return `${nm}: ` + (Object.keys(k).length ? Object.entries(k).map(([a,b]) => `${b} ${KIND[a].short.toLowerCase()}`).join(", ") : "all match"); };
+  t.push(line("Stock In", R.dIn)); t.push(line("Stock Out", R.dOut));
+  t.push(`Current Stock: ${R.stock.rows.length} godown figures differ (${R.stock.rows.filter(r => r.why === "behind").length} only because a sheet is behind, ${R.stock.rows.filter(r => r.why === "unexplained").length} not explained)`);
+  t.push(`Helper Sheet: ${R.helper.onlyO.length} only in Original, ${R.helper.onlyC.length} only in Entry copy, ${R.helper.catDiff.length} different category`);
+  t.push(""); t.push("WHAT TO DO");
+  buildTodo(R, V).forEach((x, i) => t.push(`${i + 1}. ${x[0]} — ${x[1]}`));
+  return t.join("\n");
+}
+function tableText(){
+  const v = S.view, R = S.R;
+  if(v === "in" || v === "out"){
+    const F = S.filt[v], q = normName(F.q), list = v === "in" ? R.dIn : R.dOut;
+    const rows = list.filter(d => (!F.kinds || F.kinds.includes(d.kind)) && (F.date == null || ((d.o || d.c).ds ?? -1) === F.date) && (!q || (d.o && d.o.pn.includes(q)) || (d.c && d.c.pn.includes(q))));
+    const p = (d, fn) => d.o && d.c && fn(d.o) !== fn(d.c) ? fn(d.o) + " / " + fn(d.c) : fn(d.o || d.c);
+    return ["What\tDate\tProduct\tQty\tGodown\tType\tRow Original\tRow Entry copy"].concat(rows.map(d => [KIND[d.kind].short, p(d, showDate), p(d, r => r.product), p(d, showQty), p(d, r => r.loc), p(d, r => r.type), d.o ? d.o.r : "", d.c ? d.c.r : ""].join("\t"))).join("\n");
+  }
+  if(v === "stock"){
+    const F = S.filt.stock, q = normName(F.q);
+    return ["Product\tGodown\tOriginal\tEntry copy\tDifference\tWhy"].concat(R.stock.rows.filter(r => (!F.why || r.why === F.why) && (!q || normName(r.name).includes(q))).map(r => [r.name, r.g, r.o, r.c, r.diff, WHY[r.why].short].join("\t"))).join("\n");
+  }
+  return "";
+}
+
+/* ---------- events ---------- */
+function bindView(){
+  const el = $("#view");
+  el.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => go(b.dataset.go)));
+  el.querySelectorAll(".drow").forEach(b => b.addEventListener("click", () => {
+    const ds = +b.dataset.date; const R = S.R;
+    const has = l => l.some(d => ((d.o || d.c).ds ?? -1) === ds);
+    const target = has(R.dIn) && !has(R.dOut) ? "in" : has(R.dOut) && !has(R.dIn) ? "out" : (countAt(R.dOut, ds) >= countAt(R.dIn, ds) ? "out" : "in");
+    S.filt.in.date = ds; S.filt.out.date = ds; S.filt.in.kinds = null; S.filt.out.kinds = null; go(target);
+  }));
+  el.querySelectorAll("[data-paste]").forEach(b => b.addEventListener("click", () => { const [k, t] = b.dataset.paste.split("|"); copyPaste(k, t); }));
+  const fd = $("#fromDate"); if(fd){
+    fd.addEventListener("input", () => { let v = fd.value.replace(/\D/g, "").slice(0, 8), o = v.slice(0, 2); if(v.length > 2) o += "-" + v.slice(2, 4); if(v.length > 4) o += "-" + v.slice(4); fd.value = o; });
+    fd.addEventListener("change", () => { setFrom(fd.value); if(S.files.O && S.files.C && !S.fromErr) toast("Press Compare now to apply"); else render(); });
+  }
+  const cr = $("#copyReport"); if(cr) cr.addEventListener("click", () => copyText(reportText(), $("#copyBox")));
+  const ct = $("#copyTable"); if(ct) ct.addEventListener("click", () => copyText(tableText(), $("#copyBox")));
+  if(S.view === "load"){
+    el.querySelectorAll(".drop").forEach(d => {
+      const k = d.dataset.slot;
+      d.querySelector("input").addEventListener("change", e => takeFiles([...e.target.files], k));
+      d.addEventListener("dragover", e => { e.preventDefault(); d.classList.add("over"); });
+      d.addEventListener("dragleave", () => d.classList.remove("over"));
+      d.addEventListener("drop", e => { e.preventDefault(); d.classList.remove("over"); takeFiles([...e.dataTransfer.files], k); });
+    });
+    const rb = $("#runBtn"); if(rb) rb.addEventListener("click", run);
+    const sb = $("#swapBtn"); if(sb) sb.addEventListener("click", () => { const t = S.files.O; S.files.O = S.files.C; S.files.C = t; const s = S.status.O; S.status.O = S.status.C; S.status.C = s; S.R = null; render(); });
+  }
+  if(S.view === "in" || S.view === "out"){
+    const key = S.view, F = S.filt[key];
+    el.querySelectorAll("[data-kind]").forEach(b => b.addEventListener("click", () => {
+      const k = b.dataset.kind;
+      if(k === "all") F.kinds = null; else { const cur = F.kinds || []; F.kinds = cur.includes(k) ? cur.filter(x => x !== k) : [...cur, k]; if(!F.kinds.length) F.kinds = null; }
+      render();
+    }));
+    const cd = el.querySelector("[data-cleardate]"); if(cd) cd.addEventListener("click", () => { S.filt.in.date = null; S.filt.out.date = null; render(); });
+    bindSearch("#q-" + key, F);
+  }
+  if(S.view === "stock"){
+    el.querySelectorAll("[data-why]").forEach(b => b.addEventListener("click", () => { S.filt.stock.why = b.dataset.why || null; render(); }));
+    bindSearch("#q-stock", S.filt.stock);
+  }
+  if(S.view === "health") el.querySelectorAll("[data-health]").forEach(b => b.addEventListener("click", () => { S.filt.health = b.dataset.health; render(); }));
+}
+function countAt(l, ds){ return l.filter(d => ((d.o || d.c).ds ?? -1) === ds).length; }
+let searchT = null;
+function bindSearch(sel, F){
+  const i = $(sel); if(!i) return;
+  i.addEventListener("input", () => { clearTimeout(searchT); searchT = setTimeout(() => { F.q = i.value; const pos = i.selectionStart; render(); const n = $(sel); if(n){ n.focus(); try{ n.setSelectionRange(pos, pos); }catch(e){} } }, 180); });
+}
+async function takeFiles(files, slot){
+  files = files.filter(f => /\.xlsx$/i.test(f.name) || f.type.includes("spreadsheet"));
+  if(!files.length){ S.status[slot] = "!Pick an .xlsx file (File → Download → Microsoft Excel)."; render(); return; }
+  S.busy = true; render();
+  await new Promise(r => setTimeout(r, 30));
+  const parsed = [];
+  for(const f of files.slice(0, 2)){
+    try{ parsed.push(await parseFile(await f.arrayBuffer(), f.name)); }
+    catch(e){ S.status[slot] = "!" + f.name + ": " + (e.message || e); }
+  }
+  if(parsed.length === 2){
+    const [a, b] = parsed; const copyFirst = a.isCopy && !b.isCopy;
+    S.files.O = copyFirst ? b : a; S.files.C = copyFirst ? a : b;
+    S.status.O = "Read OK"; S.status.C = S.files.C.isCopy ? "Read OK — recognised as the Entry copy (has the tool tabs)" : "Read OK";
+  } else if(parsed.length === 1){
+    const p = parsed[0];
+    let k = slot;
+    if(p.isCopy){
+      k = "C";
+      if(S.files.C && !S.files.C.isCopy && !S.files.O){ S.files.O = S.files.C; S.status.O = "Read OK"; }
+    } else if(S.files.O && S.files.O.isCopy){
+      S.files.C = S.files.O; S.status.C = "Read OK — recognised as the Entry copy"; k = "O";
+    } else if(S.files.C && S.files.C.isCopy){ k = "O"; }
+    S.files[k] = p; S.status[k] = k !== slot ? "Read OK — moved here: this file " + (p.isCopy ? "has the entry tool tabs" : "has no entry tool tabs") : (p.isCopy ? "Read OK — recognised as the Entry copy" : "Read OK");
+  }
+  S.R = null; S.busy = false; render();
+  if(S.files.O && S.files.C) run();
+}
+function setFrom(v){
+  v = String(v || "").trim(); S.fromText = v; S.fromErr = "";
+  if(!v){ S.fromDs = null; }
+  else { const d = parseDateText(v); if(d == null){ S.fromErr = "Use DD-MM-YYYY"; S.fromDs = null; } else { S.fromDs = d; S.fromText = serialToStr(d); } }
+  if(!S.fromErr){ try{ localStorage.setItem("ims-check-from", S.fromText); }catch(e){} }
+}
+function saveLastCheck(){
+  const V = verdictOf(S.R), t = new Date();
+  try{ localStorage.setItem("ims-check-last", JSON.stringify({when: serialToStr(todaySerial()) + " " + String(t.getHours()).padStart(2,"0") + ":" + String(t.getMinutes()).padStart(2,"0"),
+    real: V.realAll, newer: V.newerAll, from: S.R.fromDs != null ? serialToStr(S.R.fromDs) : ""})); }catch(e){}
+}
+async function run(){
+  if(!S.files.O || !S.files.C) return;
+  S.busy = true; render(); await new Promise(r => setTimeout(r, 30));
+  const fd = $("#fromDate"); if(fd) setFrom(fd.value);
+  if(S.fromErr){ S.busy = false; render(); return; }
+  try{ S.R = runAll(S.files.O, S.files.C, S.fromDs); S.busy = false; saveLastCheck(); go("summary"); }
+  catch(e){ S.busy = false; S.status.O = "!Compare failed: " + (e.message || e); render(); }
+}
+/* ---------- staff gate: uses the Production entry login (same site); no password here ---------- */
+function staffSession(){
+  try{ const x = JSON.parse(localStorage.getItem("ims.session") || "null"); return x && x.token && x.role === "staff" ? x : null; }
+  catch(e){ return null; }
+}
+$("#backBtn").addEventListener("click", () => {
+  if(window.opener && !window.opener.closed){ try{ window.opener.focus(); }catch(e){} window.close(); }
+  setTimeout(() => { location.href = "./"; }, 300);
+});
+const SESS = staffSession();
+if(!SESS){
+  $("#app").outerHTML = `<div class="card lock"><span class="logo" aria-hidden="true"></span><h2>Open Sheet Check from Production entry</h2>
+    <p class="sub" style="margin:0">Sheet Check is for staff admins. Log in to the Production entry tool, then open <b>IMS entries › Sheet check</b>.</p>
+    <a class="btn primary" href="./">Go to Production entry</a></div>`;
+} else {
+  document.querySelector(".ver").textContent = "v" + VERSION + " · " + (SESS.name || SESS.user || "staff");
+  window.addEventListener("storage", e => { if(e.key === "ims.session" && !staffSession()) location.reload(); });
+  try{ const f = localStorage.getItem("ims-check-from"); if(f) setFrom(f); }catch(e){}
+  if(typeof DecompressionStream === "undefined"){ S.status.O = "!This browser is too old to read .xlsx files. Use a current Chrome or Edge."; }
+  render();
+}
+</script>
+</body></html>
