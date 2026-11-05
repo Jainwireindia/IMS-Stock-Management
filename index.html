@@ -127,6 +127,12 @@ details.mv[open]>summary{background:var(--soft);position:sticky;top:0;z-index:1}
 .mvbody tr.cb td{font-weight:700;border-top:2px solid var(--line)}
 .mvcust{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .mvcust input{width:120px}
+tr.ng-start td{background:var(--bad-bg)}
+tr.ng-end td{background:var(--ok-bg)}
+.ngep{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0}
+.ngep h4{margin:0 0 4px;font-size:14px}
+.ngep ul{margin:6px 0 0;padding-left:18px}
+.ngep li{margin:3px 0}
 a.il{color:inherit;text-decoration:none;border-bottom:1px dotted var(--muted);cursor:pointer}
 a.il:hover{color:var(--brand)}
 a.go{color:var(--brand);font-weight:600;text-decoration:none;cursor:pointer;font-size:13px;white-space:nowrap}
@@ -425,7 +431,7 @@ input,select,textarea{font-weight:500}
 <script>
 'use strict';
 /* ───────── shell: login, loading the data, theme ───────── */
-const VERSION = 'v1.0.2', SHEET_SCRIPT = 'v2.0.0', ENTRY_URL = 'entry/';
+const VERSION = 'v1.0.3', SHEET_SCRIPT = 'v2.0.0', ENTRY_URL = 'entry/';
 const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbws7kmv6v4aR-UvP22BTQS7DtoMMFbrv4aKdbseCPuthXisC3wI7e9U-SOWMU_uDng/exec';
 const SESS_KEY = 'ims.session', URL_KEY = 'ims.url', CACHE_KEY = 'imsDash.cache';
 const $$ = id => document.getElementById(id);
@@ -1060,14 +1066,104 @@ document.addEventListener('toggle', e => {
 }, true);
 SEGH.moveP = v => { if (v === 'custom' && !MV.from) { MV.from = dStr(Math.max(0, ASOF - 29)); MV.to = dStr(ASOF); } MV.per = v; MV.open.clear(); renderMove(); };
 
-function renderNeg() {
-  const tot = P.filter(p => p.tot < 0), gd = []; P.forEach(p => LOCS.forEach(l => { if (p[l] < 0 && p.tot >= 0) gd.push({ pp: p, p: p.p, l, v: p[l], tot: p.tot }); }));
-  $('t-r-neg').innerHTML = '<div class="card">' + head('Negative stock', 'Kept out of the dashboard on purpose. "Total below zero" means an IN entry is missing or an OUT is too big; a single negative godown with a positive total is usually a wrong godown or a missing transfer.') +
-    '<div class="grid" style="margin-bottom:12px">' + tile('Total below zero', tot.length, 'items', '') + tile('One godown below zero (total OK)', gd.length, 'cells', '') + '</div>' +
-    '<div class="cols2"><div><h3>Total below zero</h3>' + table('negT', [{ k: 'p', l: 'Item', f: r => pLink(r) }, ...LOCS.map(l => ({ k: l, l, n: 1, neg: 1 })), { k: 'tot', l: 'Total', n: 1, neg: 1 }], tot, { sort: 'tot', dir: 1, maxH: 520, rerender: renderNeg }) + '</div>' +
-    '<div><h3>One godown below zero</h3>' + table('negG', [{ k: 'p', l: 'Item', f: r => pLink(r.pp) }, { k: 'l', l: 'Godown' }, { k: 'v', l: 'Godown stock', n: 1, neg: 1 }, { k: 'tot', l: 'Total', n: 1 }], gd, { sort: 'v', dir: 1, maxH: 520, rerender: renderNeg }) + '</div></div>' +
-    '<p class="small muted">In the full tool this report also shows which entry made each item go negative (as in IMS Stock Entry).</p></div>';
+/* ───────── NEGATIVE STOCK: when each item / godown went below zero, by which entries, and whether it came back ───────── */
+let NEGH = null;
+const SCOPE_L = (s, e) => s === 'T' ? 'Total (all godowns)' : LOCS[s] + (e && e.alsoTotal ? ' (and total)' : '');
+function negHist() {   // one pass over all entries; balances are checked at the end of each day
+  if (NEGH) return NEGH;
+  const bal = LOCS.map(() => new Float64Array(P.length)), tot = new Float64Array(P.length), open = new Map(), eps = [];
+  const val = (i, sc) => r3(sc === 'T' ? tot[i] : bal[sc][i]);
+  for (let d = 0; d <= ASOF && d < BYDAY.length; d++) {
+    if (!BYDAY[d].length) continue;
+    const touched = new Map();
+    for (const m of BYDAY[d]) { if (!touched.has(m[1])) touched.set(m[1], { T: val(m[1], 'T'), L: LOCS.map((_, k) => val(m[1], k)) }); const q = m[5] ? -m[2] : m[2]; bal[m[3]][m[1]] += q; tot[m[1]] += q; }
+    touched.forEach((before, i) => ['T', ...LOCS.map((_, k) => k)].forEach(sc => {
+      const v = val(i, sc), key = i + '|' + sc, ep = open.get(key);
+      if (v < 0 && !ep) open.set(key, { i, sc, from: d, before: sc === 'T' ? before.T : before.L[sc], after: v, min: v, minDay: d, to: null, end: null });
+      else if (v < 0 && ep) { if (v < ep.min) { ep.min = v; ep.minDay = d; } }
+      else if (v >= 0 && ep) { ep.to = d; ep.end = v; eps.push(ep); open.delete(key); }
+    }));
+  }
+  open.forEach(ep => { ep.now = val(ep.i, ep.sc); eps.push(ep); });
+  // the same episode for one godown and for the total (item kept in one godown): keep the godown one, marked "and total"
+  const gk = new Set(eps.filter(e => e.sc !== 'T').map(e => e.i + '|' + e.from + '|' + e.to + '|' + e.min));
+  for (let k = eps.length - 1; k >= 0; k--) { const e = eps[k]; if (e.sc === 'T' && gk.has(e.i + '|' + e.from + '|' + e.to + '|' + e.min)) { eps.splice(k, 1); const g = eps.find(x => x.sc !== 'T' && x.i === e.i && x.from === e.from && x.to === e.to); if (g) g.alsoTotal = 1; } }
+  NEGH = { eps, openBy: new Map([...open.values()].flatMap(e => [[e.i + '|' + e.sc, e]].concat(e.alsoTotal ? [[e.i + '|T', e]] : []))), replayTot: i => r3(tot[i]), replayLoc: (i, k) => r3(bal[k][i]) };
+  return NEGH;
 }
+const nLink = p => '<a class="il" data-neg="' + p.i + '">' + esc(p.p) + '</a>';
+const sinceOf = (i, sc) => { const e = negHist().openBy.get(i + '|' + sc); return e ? dStr(e.from) : '—'; };
+function renderNeg() {
+  const H = negHist();
+  const tot = P.filter(p => p.tot < 0).map(p => Object.assign({}, p, { pp: p, since: sinceOf(p.i, 'T') }));
+  const gd = []; P.forEach(p => LOCS.forEach((l, k) => { if (p[l] < 0 && p.tot >= 0) gd.push({ pp: p, p: p.p, l, v: p[l], tot: p.tot, since: sinceOf(p.i, k) }); }));
+  const res = H.eps.filter(e => e.to != null).map(e => ({ pp: P[e.i], p: P[e.i].p, w: SCOPE_L(e.sc, e), from: dStr(e.from), fk: e.from, to: dStr(e.to), tk: e.to, days: e.to - e.from, min: e.min }));
+  const sk = (k, x) => ({ k, l: x, sv: r => r[k === 'since' ? 'since' : k] });
+  $('t-r-neg').innerHTML = '<div class="card">' + head('Negative stock', 'Kept out of the dashboard on purpose. Click an item to see how it went below zero, which entries did it, and whether it came back. "Total below zero" means an IN entry is missing or an OUT is too big; one negative godown with a positive total is usually a wrong godown or a missing transfer.') +
+    '<div class="grid" style="margin-bottom:12px">' + tile('Total below zero', tot.length, 'items', '') + tile('One godown below zero (total OK)', gd.length, 'cells', '') + tile('Went negative and came back', res.length, 'times', 'all data') + '</div>' +
+    '<div class="cols2"><div><h3>Total below zero</h3>' + table('negT', [{ k: 'p', l: 'Item', f: r => nLink(r.pp) }, ...LOCS.map(l => ({ k: l, l, n: 1, neg: 1 })), { k: 'tot', l: 'Total', n: 1, neg: 1 }, { k: 'since', l: 'Negative since', sv: r => r.since === '—' ? '' : r.since.split('-').reverse().join('') }], tot, { sort: 'tot', dir: 1, maxH: 520, rerender: renderNeg }) + '</div>' +
+    '<div><h3>One godown below zero</h3>' + table('negG', [{ k: 'p', l: 'Item', f: r => nLink(r.pp) }, { k: 'l', l: 'Godown' }, { k: 'v', l: 'Godown stock', n: 1, neg: 1 }, { k: 'tot', l: 'Total', n: 1 }, { k: 'since', l: 'Negative since', sv: r => r.since === '—' ? '' : r.since.split('-').reverse().join('') }], gd, { sort: 'v', dir: 1, maxH: 520, rerender: renderNeg }) + '</div></div>' +
+    '<h3>Went negative and came back</h3>' + table('negR', [{ k: 'p', l: 'Item', f: r => nLink(r.pp) }, { k: 'w', l: 'Where' }, { k: 'from', l: 'Negative from', sv: r => r.fk }, { k: 'to', l: 'Back to zero or more', sv: r => r.tk }, { k: 'days', l: 'Days', n: 1 }, { k: 'min', l: 'Lowest', n: 1, neg: 1 }], res, { sort: 'to', dir: -1, maxH: 520, rerender: renderNeg }) +
+    '<p class="small muted">Stock is checked at the end of each day, so an OUT and an IN on the same day do not count as negative.</p></div>';
+}
+function dayEntries(i, d, sc) { return BYDAY[d].filter(m => m[1] === i && (sc === 'T' ? !isXfer(m) : m[3] === sc)); }
+function entTxt(m) { return esc(D.types[m[4]] || '(blank)') + ' ' + (m[5] ? '−' : '+') + fmt(m[2]) + ' ' + LOCS[m[3]]; }
+function negHints(p, e) {
+  const out = [], u = unitLabel(p), outs = dayEntries(p.i, e.from, e.sc).filter(m => m[5]);
+  if (e.sc !== 'T') {
+    const t = HIST.end[e.from][p.i];
+    if (t >= 0) { const other = LOCS.map((l, k) => k === e.sc ? null : l + ' ' + fmt(r3(negHistLocAt(p.i, k, e.from)))).filter(Boolean).join(', ');
+      out.push('The total was still ' + fmt(r2(t)) + ' ' + u + ' that day (' + other + '). Probably the wrong godown on an entry, or a missing Godown transfer into ' + LOCS[e.sc] + '.'); }
+  }
+  const seen = new Map(); outs.forEach(m => { const k = m[4] + '|' + m[2] + '|' + m[3]; seen.set(k, (seen.get(k) || 0) + 1); });
+  seen.forEach((n, k) => { if (n > 1) { const [ty, q, l] = k.split('|'); out.push('Possible double entry: ' + n + '× ' + esc(D.types[+ty]) + ' of ' + fmt(+q) + ' ' + u + ' in ' + LOCS[+l] + ' on ' + dStr(e.from) + '.'); } });
+  if (e.to != null) {
+    const ins = dayEntries(p.i, e.to, e.sc).filter(m => !m[5]);
+    const corr = ins.some(m => /correction|opening/i.test(D.types[m[4]] || ''));
+    out.push(corr ? 'It came back through a stock correction on ' + dStr(e.to) + ' — check that the correction is real stock, not a cover-up of a missing entry.'
+      : 'It came back on ' + dStr(e.to) + ' with ' + (ins.length ? ins.map(entTxt).join(', ') : 'an entry') + '. If the goods arrived earlier, it was entered ' + (e.to - e.from) + ' day' + (e.to - e.from === 1 ? '' : 's') + ' late.');
+  } else {
+    out.push('Still below zero (' + fmt(e.now) + ' ' + u + '). Look for a missing Production, Purchase or Transfer in for ' + (e.sc === 'T' ? 'this item' : LOCS[e.sc]) + ' around ' + dStr(e.from) + ', or an OUT entered twice.');
+  }
+  return out;
+}
+function negHistLocAt(i, k, d) { let v = 0; for (let x = 0; x <= d; x++) for (const m of BYDAY[x]) if (m[1] === i && m[3] === k) v += m[5] ? -m[2] : m[2]; return v; }
+function negLedger(p, e) {   // entries for that godown (or total) from a little before it went negative until it came back
+  const sc = e.sc, list = []; let bal = 0;
+  const end = e.to != null ? Math.min(ASOF, e.to) : ASOF;
+  for (let d = 0; d <= end; d++) for (const m of BYDAY[d]) {
+    if (m[1] !== p.i || (sc !== 'T' && m[3] !== sc)) continue;
+    if (sc === 'T' && isXfer(m)) { list.push({ d, m, bal: r3(bal), x: 1 }); continue; }
+    bal += m[5] ? -m[2] : m[2]; list.push({ d, m, bal: r3(bal) });
+  }
+  let first = list.findIndex(x => x.d >= e.from); if (first < 0) first = list.length;
+  const from = Math.max(0, first - 5), rows = list.slice(from, from + 60);
+  return '<div class="tw" style="max-height:360px;overflow:auto"><table><thead><tr><th>Date</th><th>Type</th><th>Godown</th><th class="n">In</th><th class="n">Out</th><th class="n">' + (sc === 'T' ? 'Total stock' : LOCS[sc] + ' stock') + '</th></tr></thead><tbody>' +
+    (from > 0 ? '<tr><td colspan="6" class="muted small">… ' + from + ' earlier entries</td></tr>' : '') +
+    rows.map(x => '<tr class="' + (x.d === e.from ? 'ng-start' : x.d === e.to ? 'ng-end' : '') + '"><td>' + dStr(x.d) + '</td><td>' + esc(D.types[x.m[4]] || '(blank)') + '</td><td>' + LOCS[x.m[3]] + '</td><td class="n">' + (x.m[5] ? '' : fmt(x.m[2])) + '</td><td class="n">' + (x.m[5] ? fmt(x.m[2]) : '') + '</td><td class="n' + (x.bal < 0 ? ' neg' : '') + '"><b>' + fmt(x.bal) + '</b></td></tr>').join('') +
+    (from + 60 < list.length ? '<tr><td colspan="6" class="muted small">… ' + (list.length - from - 60) + ' more entries</td></tr>' : '') + '</tbody></table></div>';
+}
+function negCard(p) {
+  const H = negHist(), u = unitLabel(p);
+  const eps = H.eps.filter(e => e.i === p.i).sort((a, b) => (a.to == null ? 0 : 1) - (b.to == null ? 0 : 1) || b.from - a.from);
+  let h = '<div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2 style="font-size:18px">Negative stock · ' + esc(p.p) + '</h2><div class="muted small">' + esc(p.c) + ' · ' + u + '</div></div><button class="x" id="mClose" aria-label="Close">✕</button></div>';
+  h += '<div class="grid" style="margin-top:12px">' + LOCS.map(l => tile(l, '<span class="' + (p[l] < 0 ? 'neg' : '') + '">' + fmt(p[l]) + '</span>', u, '')).join('') + tile('Total', '<span class="' + (p.tot < 0 ? 'neg' : '') + '">' + fmt(p.tot) + '</span>', u, stTag(statusOf(p))) + '</div>';
+  const rt = H.replayTot(p.i);
+  if (Math.abs(rt - p.tot) > 0.001) h += '<p class="small" style="margin:8px 0 0"><span class="tag t-warn">Check</span> CURRENT STOCK shows ' + fmt(p.tot) + ' but the STOCK IN / OUT entries add up to ' + fmt(rt) + '. An entry may be missing a date, godown or type, or the sheet formula differs.</p>';
+  if (!eps.length) h += '<p class="muted" style="margin-top:12px">This item never went below zero at the end of a day.</p>';
+  eps.forEach(e => {
+    const open = e.to == null;
+    const made = dayEntries(p.i, e.from, e.sc).filter(m => m[5]);
+    h += '<div class="ngep"><h4>' + SCOPE_L(e.sc, e) + ' · ' + (open ? '<span class="tag t-bad">Negative now</span>' : '<span class="tag t-ok">Resolved</span>') + '</h4>' +
+      '<div class="small">Went below zero on <b>' + dStr(e.from) + '</b>: ' + fmt(e.before) + ' → <b class="neg">' + fmt(e.after) + '</b> ' + u + (made.length ? ', by ' + made.map(entTxt).join(', ') : '') + '.' +
+      (e.min < e.after ? ' Lowest ' + fmt(e.min) + ' on ' + dStr(e.minDay) + '.' : '') +
+      (open ? ' Still ' + fmt(e.now) + ' now (' + (ASOF - e.from) + ' days).' : ' Back to ' + fmt(e.end) + ' on <b>' + dStr(e.to) + '</b> (' + (e.to - e.from) + ' day' + (e.to - e.from === 1 ? '' : 's') + ').') + '</div>' +
+      '<ul class="small">' + negHints(p, e).map(x => '<li>' + x + '</li>').join('') + '</ul>' +
+      '<details style="margin-top:8px"' + (open ? ' open' : '') + '><summary class="small" style="cursor:pointer">Entries around it (red = went negative, green = came back)</summary>' + negLedger(p, e) + '</details></div>';
+  });
+  $('modalCard').innerHTML = h; $('modal').classList.add('on');
+}
+document.addEventListener('click', e => { const a = e.target.closest('[data-neg]'); if (a && ROLE !== 'user') { e.preventDefault(); negCard(P[+a.dataset.neg]); } });
 
 function renderMonth() {
   const ms = monthsList(); if (RP.month == null) RP.month = ms.length - 1;
