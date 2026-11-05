@@ -431,7 +431,7 @@ input,select,textarea{font-weight:500}
 <script>
 'use strict';
 /* ───────── shell: login, loading the data, theme ───────── */
-const VERSION = 'v1.0.3', SHEET_SCRIPT = 'v2.0.0', ENTRY_URL = 'entry/';
+const VERSION = 'v1.0.4', SHEET_SCRIPT = 'v2.0.0', ENTRY_URL = 'entry/';
 const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbws7kmv6v4aR-UvP22BTQS7DtoMMFbrv4aKdbseCPuthXisC3wI7e9U-SOWMU_uDng/exec';
 const SESS_KEY = 'ims.session', URL_KEY = 'ims.url', CACHE_KEY = 'imsDash.cache';
 const $$ = id => document.getElementById(id);
@@ -966,13 +966,13 @@ function renderTopExtra() {
 }
 
 function renderSlow() {
-  const days = RP.slow, last = new Int32Array(P.length).fill(-1);
-  for (let d = 0; d <= ASOF; d++) for (const m of BYDAY[d]) if (m[4] === T['Sales']) last[m[1]] = d;
-  const rows = P.filter(p => p.tot > 0 && p.c !== '(not in CURRENT STOCK)' && (last[p.i] < 0 || ASOF - last[p.i] >= days)).map(p => ({ pp: p, p: p.p, c: p.c, tot: p.tot, u: unitLabel(p), kg: p.kgPer ? p.tot * p.kgPer : null, ls: last[p.i], since: last[p.i] < 0 ? null : ASOF - last[p.i] }));
+  const days = RP.slow, last = new Int32Array(P.length).fill(-1), k = godK(), stk = p => k < 0 ? p.tot : p[GOD];
+  for (let d = 0; d <= ASOF; d++) for (const m of BYDAY[d]) if (m[4] === T['Sales'] && (k < 0 || m[3] === k)) last[m[1]] = d;
+  const rows = P.filter(p => stk(p) > 0 && p.c !== '(not in CURRENT STOCK)' && (last[p.i] < 0 || ASOF - last[p.i] >= days)).map(p => ({ pp: p, p: p.p, c: p.c, tot: stk(p), u: unitLabel(p), kg: p.kgPer ? stk(p) * p.kgPer : null, ls: last[p.i], since: last[p.i] < 0 ? null : ASOF - last[p.i] }));
   const kg = rows.reduce((s, r) => s + (r.kg || 0), 0);
-  $('t-r-slow').innerHTML = '<div class="card">' + head('Slow & dead stock', 'Items with stock and no sale in the chosen number of days. Never sold = no sale since ' + dStr(0) + '.', seg('slowD', [[30, '30 days'], [60, '60 days'], [90, '90 days']], days)) +
+  $('t-r-slow').innerHTML = '<div class="card">' + head('Slow & dead stock', 'Items with stock' + (k < 0 ? '' : ' in ' + GOD) + ' and no sale' + (k < 0 ? '' : ' from ' + GOD) + ' in the chosen number of days. Never sold = no sale since ' + dStr(0) + '.', godSeg() + seg('slowD', [[30, '30 days'], [60, '60 days'], [90, '90 days']], days)) +
     '<div class="grid" style="margin-bottom:12px">' + tile('Items', rows.length, '', '') + tile('Never sold', rows.filter(r => r.ls < 0).length, '', '') + tile('Stock held (where weight is known)', fmt(kg), 'kg', '') + '</div>' +
-    table('slow', [{ k: 'p', l: 'Item', f: r => pLink(r.pp) }, { k: 'c', l: 'Category', f: r => '<span class="small muted">' + esc(r.c) + '</span>' }, { k: 'tot', l: 'Stock', n: 1 }, { k: 'u', l: 'Unit' }, { k: 'kg', l: 'Approx kg', n: 1 }, { k: 'ls', l: 'Last sale', f: r => r.ls < 0 ? '<span class="tag t-warn">Never sold</span>' : dStr(r.ls), sv: r => r.ls }, { k: 'since', l: 'Days since', n: 1 }],
+    table('slow', [{ k: 'p', l: 'Item', f: r => pLink(r.pp) }, { k: 'c', l: 'Category', f: r => '<span class="small muted">' + esc(r.c) + '</span>' }, { k: 'tot', l: k < 0 ? 'Stock' : GOD + ' stock', n: 1 }, { k: 'u', l: 'Unit' }, { k: 'kg', l: 'Approx kg', n: 1 }, { k: 'ls', l: 'Last sale', f: r => r.ls < 0 ? '<span class="tag t-warn">Never sold</span>' : dStr(r.ls), sv: r => r.ls }, { k: 'since', l: 'Days since', n: 1 }],
       rows, { sort: 'kg', maxH: 620, rerender: renderSlow }) + '</div>';
 }
 SEGH.slowD = v => { RP.slow = v; renderSlow(); };
@@ -987,6 +987,17 @@ function renderRestock() {
       rows, { sort: 'days', dir: 1, maxH: 660, rerender: renderRestock }) + '</div>';
 }
 
+/* Godown picker shared by Stock movement, Negative stock, Month-end and Slow & dead stock */
+let GOD = 'all'; try { GOD = localStorage.getItem('imsDash.god') || 'all'; } catch (e) {}
+if (GOD !== 'all' && !LOCS.includes(GOD)) GOD = 'all';
+const godK = () => LOCS.indexOf(GOD);
+const godSeg = () => seg('god', [['all', 'All godowns'], ...LOCS.map(l => [l, l])], GOD);
+SEGH.god = v => { GOD = v; try { localStorage.setItem('imsDash.god', v); } catch (e) {} MV.open.clear(); RENDER[CUR](); };
+function locEndAt(d, k) {   // stock of every item in one godown at the end of day d
+  const out = new Float64Array(P.length);
+  for (let x = 0; x <= Math.min(d, BYDAY.length - 1); x++) for (const m of BYDAY[x]) if (m[3] === k) out[m[1]] += m[5] ? -m[2] : m[2];
+  return out;
+}
 /* Stock movement: one line per item that moved in the period; open a line to see every entry with the total stock after it */
 const MV = { per: 'year', from: '', to: '', q: '', cat: '', open: new Set() };
 const MV_PER = { d7: ['7 days', () => [ASOF - 6, ASOF]], m1: ['1 month', () => [ASOF - 29, ASOF]], year: ['1 year', () => [ASOF - 364, ASOF]], custom: ['Custom', null] };
@@ -1003,32 +1014,35 @@ function moveRange() {
 const isXfer = m => /^transfer/i.test(D.types[m[4]] || '');
 function moveItems(r) {
   const agg = new Map();
-  each(r[0], r[1], m => { const o = agg.get(m[1]) || { i: m[1], n: 0 }; o.n++; agg.set(m[1], o); });
+  const k = godK();
+  each(r[0], r[1], m => { if (k >= 0 && m[3] !== k) return; const o = agg.get(m[1]) || { i: m[1], n: 0 }; o.n++; agg.set(m[1], o); });
   return [...agg.values()].map(o => Object.assign(o, { pp: P[o.i] }));
 }
-function moveLedger(i, r) {   // oldest first, running total of all godowns (a transfer leaves the total unchanged)
-  const out = []; let bal = r2(r[0] > 0 ? HIST.end[r[0] - 1][i] : 0);
+function moveLedger(i, r) {   // oldest first; all godowns: running total (a transfer leaves it unchanged); one godown: that godown's stock
+  const k = godK(), out = [];
+  let bal = k < 0 ? r2(r[0] > 0 ? HIST.end[r[0] - 1][i] : 0) : 0;
+  if (k >= 0) { for (let d = 0; d < r[0] && d < BYDAY.length; d++) for (const m of BYDAY[d]) if (m[1] === i && m[3] === k) bal += m[5] ? -m[2] : m[2]; bal = r3(bal); }
   const open = bal;
   for (let d = r[0]; d <= r[1]; d++) for (const m of BYDAY[d]) {
-    if (m[1] !== i) continue;
-    if (!isXfer(m)) bal = r3(bal + (m[5] ? -m[2] : m[2]));
+    if (m[1] !== i || (k >= 0 && m[3] !== k)) continue;
+    if (k >= 0 || !isXfer(m)) bal = r3(bal + (m[5] ? -m[2] : m[2]));
     out.push({ d, type: D.types[m[4]] || '(blank)', loc: LOCS[m[3]], inQ: m[5] ? null : m[2], outQ: m[5] ? m[2] : null, bal });
   }
   return { open, rows: out, close: bal };
 }
 function ledgerHtml(i, r) {
-  const p = P[i], u = unitLabel(p), L = moveLedger(i, r), n = v => v == null ? '' : fmt(v);
-  return '<div class="tw" style="max-height:420px;overflow:auto"><table><thead><tr><th>Date</th><th>Type</th><th>Godown</th><th class="n">In</th><th class="n">Out</th><th class="n">Total stock</th></tr></thead><tbody>' +
-    '<tr class="ob"><td>' + dStr(r[0]) + '</td><td colspan="4">Opening stock</td><td class="n' + (L.open < 0 ? ' neg' : '') + '">' + fmt(L.open) + '</td></tr>' +
+  const p = P[i], u = unitLabel(p), L = moveLedger(i, r), n = v => v == null ? '' : fmt(v), g = GOD === 'all' ? '' : ' (' + GOD + ')';
+  return '<div class="tw" style="max-height:420px;overflow:auto"><table><thead><tr><th>Date</th><th>Type</th><th>Godown</th><th class="n">In</th><th class="n">Out</th><th class="n">' + (g ? GOD + ' stock' : 'Total stock') + '</th></tr></thead><tbody>' +
+    '<tr class="ob"><td>' + dStr(r[0]) + '</td><td colspan="4">Opening stock' + g + '</td><td class="n' + (L.open < 0 ? ' neg' : '') + '">' + fmt(L.open) + '</td></tr>' +
     L.rows.map(x => '<tr><td>' + dStr(x.d) + '</td><td>' + esc(x.type) + '</td><td>' + x.loc + '</td><td class="n">' + n(x.inQ) + '</td><td class="n">' + n(x.outQ) + '</td><td class="n' + (x.bal < 0 ? ' neg' : '') + '"><b>' + fmt(x.bal) + '</b></td></tr>').join('') +
-    '<tr class="cb"><td>' + dStr(r[1]) + '</td><td colspan="4">Closing stock (' + u + ')</td><td class="n' + (L.close < 0 ? ' neg' : '') + '">' + fmt(L.close) + '</td></tr></tbody></table></div>' +
-    '<p class="small muted" style="margin:6px 0 0">Total stock = all godowns together after that entry. A transfer moves stock between godowns, so the total stays the same.</p>';
+    '<tr class="cb"><td>' + dStr(r[1]) + '</td><td colspan="4">Closing stock' + g + ' (' + u + ')</td><td class="n' + (L.close < 0 ? ' neg' : '') + '">' + fmt(L.close) + '</td></tr></tbody></table></div>' +
+    '<p class="small muted" style="margin:6px 0 0">' + (g ? GOD + ' stock = stock in ' + GOD + ' after that entry; transfers in and out of ' + GOD + ' count.' : 'Total stock = all godowns together after that entry. A transfer moves stock between godowns, so the total stays the same.') + '</p>';
 }
 function renderMove() {
   const r = moveRange();
   const cust = MV.per === 'custom' ? '<span class="mvcust"><input id="mvFrom" inputmode="numeric" placeholder="DD-MM-YYYY" value="' + esc(MV.from) + '"> to <input id="mvTo" inputmode="numeric" placeholder="DD-MM-YYYY" value="' + esc(MV.to) + '"><button class="b" id="mvGo">Show</button></span>' : '';
-  $('t-r-move').innerHTML = '<div class="card">' + head('Stock movement', r ? rangeTxt(r) + ' · items that moved in this period. Open an item to see every entry.' : 'Enter both dates as DD-MM-YYYY.',
-      seg('moveP', Object.entries(MV_PER).map(([k, v]) => [k, v[0]]), MV.per) + (r ? csvBtn('move', 'Stock movement') : '')) +
+  $('t-r-move').innerHTML = '<div class="card">' + head('Stock movement', r ? rangeTxt(r) + (GOD === 'all' ? '' : ' · ' + GOD + ' only') + ' · items that moved in this period. Open an item to see every entry.' : 'Enter both dates as DD-MM-YYYY.',
+      godSeg() + seg('moveP', Object.entries(MV_PER).map(([k, v]) => [k, v[0]]), MV.per) + (r ? csvBtn('move', 'Stock movement') : '')) +
     (cust ? '<div class="row filters">' + cust + '</div>' : '') +
     (r ? '<div class="row filters"><input id="mvQ" placeholder="Search item" value="' + esc(MV.q) + '" style="min-width:200px;flex:1"><select id="mvCat"><option value="">All categories</option>' +
       CATS.map(c => '<option' + (c === MV.cat ? ' selected' : '') + '>' + esc(c) + '</option>').join('') + '</select><span class="muted small" id="mvCount"></span></div><div id="mvList"></div>' : '') + '</div>';
@@ -1056,7 +1070,7 @@ function drawMoveList() {
   // every entry of the period, for "Download for Excel"
   const all = [];
   items.forEach(o => moveLedger(o.i, r).rows.forEach(x => all.push({ d: dStr(x.d), p: o.pp.p, c: o.pp.c, type: x.type, loc: x.loc, inQ: x.inQ, outQ: x.outQ, bal: x.bal, u: unitLabel(o.pp) })));
-  TABLES.move = { cols: [{ k: 'd', l: 'Date' }, { k: 'p', l: 'Item' }, { k: 'c', l: 'Category' }, { k: 'type', l: 'Type' }, { k: 'loc', l: 'Godown' }, { k: 'inQ', l: 'In' }, { k: 'outQ', l: 'Out' }, { k: 'bal', l: 'Total stock after' }, { k: 'u', l: 'Unit' }], rows: all };
+  TABLES.move = { cols: [{ k: 'd', l: 'Date' }, { k: 'p', l: 'Item' }, { k: 'c', l: 'Category' }, { k: 'type', l: 'Type' }, { k: 'loc', l: 'Godown' }, { k: 'inQ', l: 'In' }, { k: 'outQ', l: 'Out' }, { k: 'bal', l: (GOD === 'all' ? 'Total' : GOD) + ' stock after' }, { k: 'u', l: 'Unit' }], rows: all };
 }
 document.addEventListener('toggle', e => {
   const d = e.target; if (!d.matches || !d.matches('details.mv')) return;
@@ -1094,17 +1108,24 @@ function negHist() {   // one pass over all entries; balances are checked at the
 const nLink = p => '<a class="il" data-neg="' + p.i + '">' + esc(p.p) + '</a>';
 const sinceOf = (i, sc) => { const e = negHist().openBy.get(i + '|' + sc); return e ? dStr(e.from) : '—'; };
 function renderNeg() {
-  const H = negHist();
-  const tot = P.filter(p => p.tot < 0).map(p => Object.assign({}, p, { pp: p, since: sinceOf(p.i, 'T') }));
-  const gd = []; P.forEach(p => LOCS.forEach((l, k) => { if (p[l] < 0 && p.tot >= 0) gd.push({ pp: p, p: p.p, l, v: p[l], tot: p.tot, since: sinceOf(p.i, k) }); }));
-  const res = H.eps.filter(e => e.to != null).map(e => ({ pp: P[e.i], p: P[e.i].p, w: SCOPE_L(e.sc, e), from: dStr(e.from), fk: e.from, to: dStr(e.to), tk: e.to, days: e.to - e.from, min: e.min }));
-  const sk = (k, x) => ({ k, l: x, sv: r => r[k === 'since' ? 'since' : k] });
-  $('t-r-neg').innerHTML = '<div class="card">' + head('Negative stock', 'Kept out of the dashboard on purpose. Click an item to see how it went below zero, which entries did it, and whether it came back. "Total below zero" means an IN entry is missing or an OUT is too big; one negative godown with a positive total is usually a wrong godown or a missing transfer.') +
-    '<div class="grid" style="margin-bottom:12px">' + tile('Total below zero', tot.length, 'items', '') + tile('One godown below zero (total OK)', gd.length, 'cells', '') + tile('Went negative and came back', res.length, 'times', 'all data') + '</div>' +
-    '<div class="cols2"><div><h3>Total below zero</h3>' + table('negT', [{ k: 'p', l: 'Item', f: r => nLink(r.pp) }, ...LOCS.map(l => ({ k: l, l, n: 1, neg: 1 })), { k: 'tot', l: 'Total', n: 1, neg: 1 }, { k: 'since', l: 'Negative since', sv: r => r.since === '—' ? '' : r.since.split('-').reverse().join('') }], tot, { sort: 'tot', dir: 1, maxH: 520, rerender: renderNeg }) + '</div>' +
-    '<div><h3>One godown below zero</h3>' + table('negG', [{ k: 'p', l: 'Item', f: r => nLink(r.pp) }, { k: 'l', l: 'Godown' }, { k: 'v', l: 'Godown stock', n: 1, neg: 1 }, { k: 'tot', l: 'Total', n: 1 }, { k: 'since', l: 'Negative since', sv: r => r.since === '—' ? '' : r.since.split('-').reverse().join('') }], gd, { sort: 'v', dir: 1, maxH: 520, rerender: renderNeg }) + '</div></div>' +
-    '<h3>Went negative and came back</h3>' + table('negR', [{ k: 'p', l: 'Item', f: r => nLink(r.pp) }, { k: 'w', l: 'Where' }, { k: 'from', l: 'Negative from', sv: r => r.fk }, { k: 'to', l: 'Back to zero or more', sv: r => r.tk }, { k: 'days', l: 'Days', n: 1 }, { k: 'min', l: 'Lowest', n: 1, neg: 1 }], res, { sort: 'to', dir: -1, maxH: 520, rerender: renderNeg }) +
-    '<p class="small muted">Stock is checked at the end of each day, so an OUT and an IN on the same day do not count as negative.</p></div>';
+  const H = negHist(), k = godK(), sinceSv = r => r.since === '—' ? '' : r.since.split('-').reverse().join('');
+  const resAll = H.eps.filter(e => e.to != null && (k < 0 || e.sc === k));
+  const res = resAll.map(e => ({ pp: P[e.i], p: P[e.i].p, w: SCOPE_L(e.sc, e), from: dStr(e.from), fk: e.from, to: dStr(e.to), tk: e.to, days: e.to - e.from, min: e.min }));
+  const resTbl = '<h3>Went negative and came back' + (k < 0 ? '' : ' — ' + GOD) + '</h3>' + table('negR', [{ k: 'p', l: 'Item', f: r => nLink(r.pp) }, { k: 'w', l: 'Where' }, { k: 'from', l: 'Negative from', sv: r => r.fk }, { k: 'to', l: 'Back to zero or more', sv: r => r.tk }, { k: 'days', l: 'Days', n: 1 }, { k: 'min', l: 'Lowest', n: 1, neg: 1 }], res, { sort: 'to', dir: -1, maxH: 520, rerender: renderNeg });
+  let body;
+  if (k < 0) {
+    const tot = P.filter(p => p.tot < 0).map(p => Object.assign({}, p, { pp: p, since: sinceOf(p.i, 'T') }));
+    const gd = []; P.forEach(p => LOCS.forEach((l, kk) => { if (p[l] < 0 && p.tot >= 0) gd.push({ pp: p, p: p.p, l, v: p[l], tot: p.tot, since: sinceOf(p.i, kk) }); }));
+    body = '<div class="grid" style="margin-bottom:12px">' + tile('Total below zero', tot.length, 'items', '') + tile('One godown below zero (total OK)', gd.length, 'cells', '') + tile('Went negative and came back', res.length, 'times', 'all data') + '</div>' +
+      '<div class="cols2"><div><h3>Total below zero</h3>' + table('negT', [{ k: 'p', l: 'Item', f: r => nLink(r.pp) }, ...LOCS.map(l => ({ k: l, l, n: 1, neg: 1 })), { k: 'tot', l: 'Total', n: 1, neg: 1 }, { k: 'since', l: 'Negative since', sv: sinceSv }], tot, { sort: 'tot', dir: 1, maxH: 520, rerender: renderNeg }) + '</div>' +
+      '<div><h3>One godown below zero</h3>' + table('negG', [{ k: 'p', l: 'Item', f: r => nLink(r.pp) }, { k: 'l', l: 'Godown' }, { k: 'v', l: 'Godown stock', n: 1, neg: 1 }, { k: 'tot', l: 'Total', n: 1 }, { k: 'since', l: 'Negative since', sv: sinceSv }], gd, { sort: 'v', dir: 1, maxH: 520, rerender: renderNeg }) + '</div></div>';
+  } else {
+    const rows = P.filter(p => p[GOD] < 0).map(p => ({ pp: p, p: p.p, v: p[GOD], tot: p.tot, since: sinceOf(p.i, k) }));
+    body = '<div class="grid" style="margin-bottom:12px">' + tile(GOD + ' below zero', rows.length, 'items', '') + tile('of which total is OK', rows.filter(r => r.tot >= 0).length, 'items', 'wrong godown or missing transfer?') + tile('Went negative and came back', res.length, 'times', GOD + ', all data') + '</div>' +
+      '<h3>' + GOD + ' below zero</h3>' + table('negW', [{ k: 'p', l: 'Item', f: r => nLink(r.pp) }, { k: 'v', l: GOD + ' stock', n: 1, neg: 1 }, { k: 'tot', l: 'Total (all godowns)', n: 1, neg: 1 }, { k: 'since', l: 'Negative since', sv: sinceSv }], rows, { sort: 'v', dir: 1, maxH: 520, rerender: renderNeg });
+  }
+  $('t-r-neg').innerHTML = '<div class="card">' + head('Negative stock', 'Kept out of the dashboard on purpose. Click an item to see how it went below zero, which entries did it, and whether it came back. "Total below zero" means an IN entry is missing or an OUT is too big; one negative godown with a positive total is usually a wrong godown or a missing transfer.', godSeg()) +
+    body + resTbl + '<p class="small muted">Stock is checked at the end of each day, so an OUT and an IN on the same day do not count as negative.</p></div>';
 }
 function dayEntries(i, d, sc) { return BYDAY[d].filter(m => m[1] === i && (sc === 'T' ? !isXfer(m) : m[3] === sc)); }
 function entTxt(m) { return esc(D.types[m[4]] || '(blank)') + ' ' + (m[5] ? '−' : '+') + fmt(m[2]) + ' ' + LOCS[m[3]]; }
@@ -1145,12 +1166,12 @@ function negLedger(p, e) {   // entries for that godown (or total) from a little
 }
 function negCard(p) {
   const H = negHist(), u = unitLabel(p);
-  const eps = H.eps.filter(e => e.i === p.i).sort((a, b) => (a.to == null ? 0 : 1) - (b.to == null ? 0 : 1) || b.from - a.from);
-  let h = '<div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2 style="font-size:18px">Negative stock · ' + esc(p.p) + '</h2><div class="muted small">' + esc(p.c) + ' · ' + u + '</div></div><button class="x" id="mClose" aria-label="Close">✕</button></div>';
+  const k = godK(), eps = H.eps.filter(e => e.i === p.i && (k < 0 || e.sc === k)).sort((a, b) => (a.to == null ? 0 : 1) - (b.to == null ? 0 : 1) || b.from - a.from);
+  let h = '<div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2 style="font-size:18px">Negative stock · ' + esc(p.p) + (k < 0 ? '' : ' · ' + GOD) + '</h2><div class="muted small">' + esc(p.c) + ' · ' + u + '</div></div><button class="x" id="mClose" aria-label="Close">✕</button></div>';
   h += '<div class="grid" style="margin-top:12px">' + LOCS.map(l => tile(l, '<span class="' + (p[l] < 0 ? 'neg' : '') + '">' + fmt(p[l]) + '</span>', u, '')).join('') + tile('Total', '<span class="' + (p.tot < 0 ? 'neg' : '') + '">' + fmt(p.tot) + '</span>', u, stTag(statusOf(p))) + '</div>';
   const rt = H.replayTot(p.i);
   if (Math.abs(rt - p.tot) > 0.001) h += '<p class="small" style="margin:8px 0 0"><span class="tag t-warn">Check</span> CURRENT STOCK shows ' + fmt(p.tot) + ' but the STOCK IN / OUT entries add up to ' + fmt(rt) + '. An entry may be missing a date, godown or type, or the sheet formula differs.</p>';
-  if (!eps.length) h += '<p class="muted" style="margin-top:12px">This item never went below zero at the end of a day.</p>';
+  if (!eps.length) h += '<p class="muted" style="margin-top:12px">' + (k < 0 ? 'This item' : GOD + ' for this item') + ' never went below zero at the end of a day.' + (k < 0 ? '' : ' Pick "All godowns" in the report to see the other godowns.') + '</p>';
   eps.forEach(e => {
     const open = e.to == null;
     const made = dayEntries(p.i, e.from, e.sc).filter(m => m[5]);
@@ -1167,14 +1188,15 @@ document.addEventListener('click', e => { const a = e.target.closest('[data-neg]
 
 function renderMonth() {
   const ms = monthsList(); if (RP.month == null) RP.month = ms.length - 1;
-  const m = ms[RP.month], r = m.r, open = HIST.end[r[0] - 1] || new Float64Array(P.length);
+  const m = ms[RP.month], r = m.r, k = godK();
+  const open = k < 0 ? (HIST.end[r[0] - 1] || new Float64Array(P.length)) : locEndAt(r[0] - 1, k), close = k < 0 ? HIST.end[r[1]] : locEndAt(r[1], k);
   const inQ = new Float64Array(P.length), outQ = new Float64Array(P.length), sal = new Float64Array(P.length), prd = new Float64Array(P.length);
-  each(r[0], r[1], x => { if (x[5]) outQ[x[1]] += x[2]; else inQ[x[1]] += x[2]; if (x[4] === T['Sales']) sal[x[1]] += x[2]; if (x[4] === T['Production']) prd[x[1]] += x[2]; });
+  each(r[0], r[1], x => { if (k >= 0 && x[3] !== k) return; if (x[5]) outQ[x[1]] += x[2]; else inQ[x[1]] += x[2]; if (x[4] === T['Sales']) sal[x[1]] += x[2]; if (x[4] === T['Production']) prd[x[1]] += x[2]; });
   const cats = new Map();
-  P.forEach(p => { const o = open[p.i], i = inQ[p.i], q = outQ[p.i], c = HIST.end[r[1]][p.i]; if (!o && !i && !q && !c) return; const k = p.c + '|' + p.unit; const g = cats.get(k) || { c: p.c, u: unitLabel(p), n: 0, open: 0, prod: 0, inn: 0, sal: 0, out: 0, close: 0 }; g.n++; g.open += o; g.prod += prd[p.i]; g.inn += i; g.sal += sal[p.i]; g.out += q; g.close += c; cats.set(k, g); });
+  P.forEach(p => { const o = open[p.i], i = inQ[p.i], q = outQ[p.i], c = close[p.i]; if (!o && !i && !q && !c) return; const k = p.c + '|' + p.unit; const g = cats.get(k) || { c: p.c, u: unitLabel(p), n: 0, open: 0, prod: 0, inn: 0, sal: 0, out: 0, close: 0 }; g.n++; g.open += o; g.prod += prd[p.i]; g.inn += i; g.sal += sal[p.i]; g.out += q; g.close += c; cats.set(k, g); });
   const rows = [...cats.values()].map(g => Object.assign(g, { open: r2(g.open), close: r2(g.close) }));
-  $('t-r-month').innerHTML = '<div class="card">' + head('Month-end report — ' + m.l, rangeTxt(r) + ' · per category, in each category’s own unit. "In" includes production, purchase, returns and transfers in; "Out" includes sales, usage and transfers out.',
-    '<select id="monthSel">' + ms.map((x, i) => '<option value="' + i + '"' + (i === RP.month ? ' selected' : '') + '>' + x.l + '</option>').join('') + '</select>' + csvBtn('month', 'Month-end ' + m.l) + '<button class="b noprint" onclick="print()">Print</button>') +
+  $('t-r-month').innerHTML = '<div class="card">' + head('Month-end report — ' + m.l + (k < 0 ? '' : ' · ' + GOD), rangeTxt(r) + (k < 0 ? '' : ' · ' + GOD + ' only (transfers in and out of ' + GOD + ' count)') + ' · per category, in each category’s own unit. "In" includes production, purchase, returns and transfers in; "Out" includes sales, usage and transfers out.',
+    godSeg() + '<select id="monthSel">' + ms.map((x, i) => '<option value="' + i + '"' + (i === RP.month ? ' selected' : '') + '>' + x.l + '</option>').join('') + '</select>' + csvBtn('month', 'Month-end ' + m.l + (k < 0 ? '' : ' ' + GOD)) + '<button class="b noprint" onclick="print()">Print</button>') +
     table('month', [{ k: 'c', l: 'Category' }, { k: 'u', l: 'Unit' }, { k: 'n', l: 'Items', n: 1 }, { k: 'open', l: 'Opening', n: 1, neg: 1 }, { k: 'prod', l: 'of which production', n: 1 }, { k: 'inn', l: 'In (all)', n: 1 }, { k: 'sal', l: 'of which sales', n: 1 }, { k: 'out', l: 'Out (all)', n: 1 }, { k: 'close', l: 'Closing', n: 1, neg: 1, f: r => '<b>' + fmt(r.close) + '</b>' }],
       rows, { maxH: 680, rerender: renderMonth }) + '</div>';
   $('monthSel').onchange = e => { RP.month = +e.target.value; renderMonth(); };
