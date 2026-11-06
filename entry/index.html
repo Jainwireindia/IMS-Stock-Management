@@ -545,7 +545,7 @@ input,select,textarea{font-weight:500}
 
 <script>
 'use strict';
-const VERSION = 'v2.2.0';
+const VERSION = 'v2.2.1';
 const SHEET_SCRIPT = 'v2.2.0';
 const DASH_URL = '../';   // the IMS Stock Dashboard (same site, one folder up)
 const LOCS = ['WH', 'BB2', 'BB1'];
@@ -2180,7 +2180,9 @@ $('xRead').onclick = () => {
 };
 $('xAdd').onclick = () => { G.xfer.push({ src: '', prod: '', how: 'new', qty: null, from: $('xFrom').value, to: $('xTo').value }); renderXfer(); };
 
-const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbws7kmv6v4aR-UvP22BTQS7DtoMMFbrv4aKdbseCPuthXisC3wI7e9U-SOWMU_uDng/exec';
+const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbwpYrxJhyc5gOd1ZABq3x0vYQdpmr2aixqcKCV8Sjv9Jo3IAdGboRMpHbW9_sSlA1aw/exec';   // new sheet (06-11-2026)
+// the old sheet's address, if a browser still has it saved, is dropped so it uses the new sheet
+try { if (localStorage.getItem('ims.url') === 'https://script.google.com/macros/s/AKfycbws7kmv6v4aR-UvP22BTQS7DtoMMFbrv4aKdbseCPuthXisC3wI7e9U-SOWMU_uDng/exec') localStorage.removeItem('ims.url'); } catch (e) {}
 // One login for the dashboard and the entry tool: both pages read the same saved login in this browser
 const SESS_KEY = 'ims.session', URL_KEY = 'ims.url';
 function sessRead() { try { const s = JSON.parse(localStorage.getItem(SESS_KEY) || 'null'); return s && s.token ? s : null; } catch (e) { return null; } }

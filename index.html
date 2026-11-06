@@ -462,8 +462,10 @@ input,select,textarea{font-weight:500}
 <script>
 'use strict';
 /* ───────── shell: login, loading the data, theme ───────── */
-const VERSION = 'v1.2.0', SHEET_SCRIPT = 'v2.2.0', ENTRY_URL = 'entry/';
-const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbws7kmv6v4aR-UvP22BTQS7DtoMMFbrv4aKdbseCPuthXisC3wI7e9U-SOWMU_uDng/exec';
+const VERSION = 'v1.2.1', SHEET_SCRIPT = 'v2.2.0', ENTRY_URL = 'entry/';
+const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbwpYrxJhyc5gOd1ZABq3x0vYQdpmr2aixqcKCV8Sjv9Jo3IAdGboRMpHbW9_sSlA1aw/exec';   // new sheet (06-11-2026)
+// the old sheet's address, if a browser still has it saved, is dropped so it uses the new sheet
+try { if (localStorage.getItem('ims.url') === 'https://script.google.com/macros/s/AKfycbws7kmv6v4aR-UvP22BTQS7DtoMMFbrv4aKdbseCPuthXisC3wI7e9U-SOWMU_uDng/exec') localStorage.removeItem('ims.url'); } catch (e) {}
 const SESS_KEY = 'ims.session', URL_KEY = 'ims.url', CACHE_KEY = 'imsDash.cache';
 const $$ = id => document.getElementById(id);
 const SH = { url: DEFAULT_URL, token: '', role: '', name: '', started: false };
