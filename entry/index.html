@@ -549,8 +549,8 @@ input,select,textarea{font-weight:500}
 
 <script>
 'use strict';
-const VERSION = 'v2.2.2';
-const SHEET_SCRIPT = 'v2.2.0';
+const VERSION = 'v2.2.4';
+const SHEET_SCRIPT = 'v2.2.1';
 const DASH_URL = '../';   // the IMS Stock Dashboard (same site, one folder up)
 const LOCS = ['WH', 'BB2', 'BB1'];
 // Godowns (GODOWNS tab of the sheet): WH / BB2 / BB1 keep stock here; branches (Jain EKM, Calicut, Kannur, Office) are far away:
@@ -692,6 +692,17 @@ function cacheSave(a) { IDB.set(cacheKey(), { at: nowStr(), url: S.url, data: a,
 function cacheRead() { return IDB.get(cacheKey()).then(c => c && c.url === S.url && c.data ? c : null); }
 const maxRow = rows => { let m = 2; if (rows) for (const r of rows) if (r[0] > m) m = r[0]; return m; };
 const hmNow = () => { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+function mismatchKey(raw) {   // items whose CURRENT STOCK (WH / BB2 / BB1) differs from what their entries add up to
+  if (!raw || !raw.log || !raw.products) return '';
+  const k = x => String(x).toLowerCase().replace(/\s+/g, ' ').trim(), L = ['WH', 'BB2', 'BB1'], sum = new Map();
+  for (const dir of ['IN', 'OUT']) for (const r of raw.log[dir] || []) {
+    const g = L.indexOf(r[4]); if (g < 0 || typeof r[3] !== 'number') continue;
+    const key = k(r[2]); let a = sum.get(key); if (!a) sum.set(key, a = [0, 0, 0]); a[g] += dir === 'IN' ? r[3] : -r[3];
+  }
+  const out = [];
+  for (const p of raw.products) { const a = sum.get(k(p.p)) || [0, 0, 0]; L.forEach((l, g) => { const d = Math.round(((+p[l] || 0) - a[g]) * 1000) / 1000; if (Math.abs(d) > 0.001) out.push(k(p.p) + '|' + l + '|' + d); }); }
+  return out.sort().join('\n');
+}
 function stripRaw(j) { const r = Object.assign({}, j); delete r.ok; delete r.delta; delete r.same; return r; }
 async function fetchAll(since) {
   const a = await api('all', since ? { since } : {});
@@ -702,7 +713,7 @@ async function fetchAll(since) {
 }
 function connText() { return 'Connected · ' + S.products.length + ' products' + (S.checkedAt ? ' · checked ' + hmNow() : ''); }
 function useData(a, label) {
-  S.raw = a;
+  S.raw = a; S.mk = mismatchKey(a);
   ingest(a); S.log = { IN: a.log.IN.slice(), OUT: a.log.OUT.slice() };
   OB.items.filter(i => i.state !== 'done').forEach(applyLocal);   // saves not yet on the sheet
   S.ready = true;
@@ -721,7 +732,9 @@ async function loadAll(opts) {
     const a = await fetchAll(since);
     S.checkedAt = Date.now(); if (!since) S.fullAt = Date.now();
     if (a.same) { S.raw.rev = a.rev; cacheSave(S.raw); if (S.ready) setConn('ok', connText()); if (!quiet) refreshGrids(); obSync(); return; }
-    const raw = a.delta ? Object.assign(stripRaw(a), { log: { IN: S.raw.log.IN.concat(a.log.IN), OUT: S.raw.log.OUT.concat(a.log.OUT) } }) : stripRaw(a);
+    let raw = a.delta ? Object.assign(stripRaw(a), { log: { IN: S.raw.log.IN.concat(a.log.IN), OUT: S.raw.log.OUT.concat(a.log.OUT) } }) : stripRaw(a);
+    // CURRENT STOCK and the entries disagree in a new way after "only the new rows": something was edited → read every row again
+    if (a.delta && mismatchKey(raw) !== S.mk) { const f = await fetchAll(null); if (!f.same) { raw = stripRaw(f); S.fullAt = Date.now(); } }
     useData(raw);
     S.loadedAt = Date.now();
     if (!quiet) refreshGrids();
@@ -2105,7 +2118,7 @@ function applyTheme(t) {
 }
 let theme = recall('theme') || 'auto'; applyTheme(theme);
 $('themeBtn').onclick = () => { theme = THEMES[(THEMES.indexOf(theme) + 1) % 3]; store('theme', theme); applyTheme(theme); };
-$('refresh').onclick = () => loadAll();
+$('refresh').onclick = () => loadAll({ full: true });   // the button always reads the whole sheet again
 
 setupDrop('loadDrop', 'loadFile', onLoadFile);
 $('prodDate').addEventListener('input', () => { if ($('prodDate').value.length === 10 || !$('prodDate').value) renderProd(); }); $('loadDate').addEventListener('input', renderLoad);
@@ -2276,7 +2289,7 @@ if (sess && sess.role === 'staff') {
   S.token = sess.token; S.role = sess.role; S.user = sess.name; showWho();
   cacheRead().then(c => {
     if (c) { try { S.fullAt = c.fullAt || 0; useData(c.data, 'Saved copy ' + c.at + ' · updating…'); } catch (e) { S.raw = null; } }
-    return loadAll();
+    return loadAll({ full: true });   // opening the page: saved copy at once, then the whole sheet again
   }).then(() => { afterStart(); startSyncLoop(); });
 } else {
   showGate(sess ? 'You are logged in to the dashboard as ' + (ROLE_TXT[sess.role] || sess.role) + '. The entry tool needs a staff admin login.' : '');

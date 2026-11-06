@@ -466,7 +466,7 @@ input,select,textarea{font-weight:500}
 <script>
 'use strict';
 /* ───────── shell: login, loading the data, theme ───────── */
-const VERSION = 'v1.2.2', SHEET_SCRIPT = 'v2.2.0', ENTRY_URL = 'entry/';
+const VERSION = 'v1.2.4', SHEET_SCRIPT = 'v2.2.1', ENTRY_URL = 'entry/';
 const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbwpYrxJhyc5gOd1ZABq3x0vYQdpmr2aixqcKCV8Sjv9Jo3IAdGboRMpHbW9_sSlA1aw/exec';   // new sheet (06-11-2026)
 // the old sheet's address, if a browser still has it saved, is dropped so it uses the new sheet
 try { if (localStorage.getItem('ims.url') === 'https://script.google.com/macros/s/AKfycbws7kmv6v4aR-UvP22BTQS7DtoMMFbrv4aKdbseCPuthXisC3wI7e9U-SOWMU_uDng/exec') localStorage.removeItem('ims.url'); } catch (e) {}
@@ -640,18 +640,30 @@ function logout(msg) {
 $$('logout').onclick = () => logout('');
 
 /* ───────── data: first load, then a check every minute ───────── */
-const sig = D => D.mv.length + '|' + D.prods.length + '|' + D.prods.reduce((t, p) => t + Math.abs(p[2]) + Math.abs(p[3]) + Math.abs(p[4]), 0).toFixed(3);
+// Items whose CURRENT STOCK (WH / BB2 / BB1) is not what their STOCK IN / STOCK OUT rows add up to. When this list changes
+// after "only the new rows" came in, something was edited in the sheet → the whole of STOCK IN / STOCK OUT is read again.
+function mismatchKey(raw) {
+  if (!raw || !raw.log || !raw.products) return '';
+  const k = x => String(x).toLowerCase().replace(/\s+/g, ' ').trim(), L = ['WH', 'BB2', 'BB1'], sum = new Map();
+  for (const dir of ['IN', 'OUT']) for (const r of raw.log[dir] || []) {
+    const g = L.indexOf(r[4]); if (g < 0 || typeof r[3] !== 'number') continue;
+    const key = k(r[2]); let a = sum.get(key); if (!a) sum.set(key, a = [0, 0, 0]); a[g] += dir === 'IN' ? r[3] : -r[3];
+  }
+  const out = [];
+  for (const p of raw.products) { const a = sum.get(k(p.p)) || [0, 0, 0]; L.forEach((l, g) => { const d = Math.round(((+p[l] || 0) - a[g]) * 1000) / 1000; if (Math.abs(d) > 0.001) out.push(k(p.p) + '|' + l + '|' + d); }); }
+  return out.sort().join('\n');
+}
 function stripRaw(j) { const r = Object.assign({}, j); delete r.ok; delete r.delta; delete r.same; return r; }
 function saveRaw() { IDB.set(cacheKey(), { raw: SH.raw, at: Date.now(), fullAt: SH.fullAt || 0, role: SH.role }); }
 // first open of the data (after login, or from the saved copy)
 function openWith(raw, fresh) {
   SH.raw = stripRaw(raw); if (fresh) { SH.fullAt = Date.now(); SH.checkedAt = Date.now(); saveRaw(); }
-  const D = buildD(SH.raw); SH.sig = sig(D);
+  const D = buildD(SH.raw); SH.mk = mismatchKey(SH.raw);
   $$('gate').hidden = true; clearInterval(stepTimer); gateBusy(false);
   SH.started = true; startApp(D, SH.role, SH.name, null);
   live(fresh ? 'ok' : 'busy');
   startSyncLoop();
-  if (!fresh) sync({});
+  if (!fresh) sync({ full: true });   // opening the page: show the saved copy at once, then read the whole sheet again
 }
 async function loadFull() {
   $$('gate').hidden = false; $$('gForm').hidden = true; $$('gTabs').hidden = true; $$('gHint').hidden = true; $$('gSteps').hidden = false; $$('gLoadBtns').hidden = true;
@@ -695,11 +707,18 @@ async function sync(o) {
       added = j.log.IN.length + j.log.OUT.length;
       SH.raw = Object.assign(stripRaw(j), { log: { IN: SH.raw.log.IN.concat(j.log.IN), OUT: SH.raw.log.OUT.concat(j.log.OUT) } });
     } else SH.raw = stripRaw(j);
+    let note = added ? added + ' new row' + (added === 1 ? '' : 's') : 'updated';
+    if (SH.raw.log) {
+      const mk = mismatchKey(SH.raw);
+      if (j.delta && mk !== SH.mk) {   // CURRENT STOCK and the entries now disagree in a new way: read every row again
+        const f = await api('dash', {});
+        if (!f.ok) { if (f.auth) { logout(f.error); return; } throw new Error(f.error); }
+        SH.raw = stripRaw(f); SH.fullAt = Date.now(); note = 'sheet changed · all rows read again';
+      }
+      SH.mk = mismatchKey(SH.raw);
+    }
     saveRaw();
-    const D = buildD(SH.raw), s = sig(D);
-    if (s === SH.sig && !o.manual) { live('ok'); return; }
-    SH.sig = s;
-    applyData(D, added ? added + ' new row' + (added === 1 ? '' : 's') : 'updated');
+    applyData(buildD(SH.raw), note);   // always shown: a renamed item can leave every total the same
   } catch (e) { live('off', netMsg(e)); }
   finally { syncing = false; if (o.manual) $$('refresh').disabled = false; }
 }
@@ -717,7 +736,7 @@ function applyData(D, note) {
   live('ok', note);
 }
 $$('newData').onclick = () => { if (SH.pending) { const [D, n] = SH.pending; SH.pending = null; document.activeElement && document.activeElement.blur && document.activeElement.blur(); $$('modal').classList.remove('on'); applyData(D, n); } };
-$$('refresh').onclick = () => sync({ manual: true });
+$$('refresh').onclick = () => sync({ manual: true, full: true });   // the button always reads the whole sheet again
 let loopOn = false;
 function startSyncLoop() {
   if (loopOn) return; loopOn = true;
