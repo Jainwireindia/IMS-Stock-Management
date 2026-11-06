@@ -126,6 +126,11 @@ details.mv[open]>summary{background:var(--soft);position:sticky;top:0;z-index:1}
 .mvbody tr.ob td{color:var(--muted);font-style:italic}
 .mvbody tr.cb td{font-weight:700;border-top:2px solid var(--line)}
 .mvcust{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tsort{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:0 0 6px}
+.tsort button{border:1px solid var(--line);background:var(--card);color:var(--brand);font:inherit;font-weight:650;border-radius:7px;padding:3px 9px;cursor:pointer}
+.tsort button:hover{background:var(--soft)}
+th[data-sort]{cursor:pointer}
+.ent-tot td{font-weight:700;border-top:2px solid var(--line)}
 .mvcust input{width:120px}
 tr.ng-start td{background:var(--bad-bg)}
 tr.ng-end td{background:var(--ok-bg)}
@@ -222,6 +227,33 @@ details.sec>.in{padding:0 18px 18px}
 .gate-card button.p{padding:11px;font-size:15px;margin-top:4px}
 .gate-card .alt{background:none;border:0;color:var(--brand);font:inherit;font-weight:600;cursor:pointer;justify-self:start;padding:2px 0}
 .gate-card .sample{font-size:12px;background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:7px 10px}
+/* login card (v1.1.0) */
+.gtabs{display:grid;grid-template-columns:1fr 1fr;background:var(--soft);border-radius:11px;padding:3px;gap:3px}
+.gtabs button{border:0;background:none;padding:8px 6px;border-radius:8px;font:inherit;font-size:14px;font-weight:700;color:var(--muted);cursor:pointer}
+.gtabs button.on{background:var(--card);color:var(--brand);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.gate-card form{display:grid;gap:12px}
+.gate-card form[hidden],.gate-card [hidden]{display:none!important}
+.pw{position:relative;display:block}
+.pw input{width:100%;box-sizing:border-box;padding-right:44px}
+.pw .eye{position:absolute;right:3px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--muted);cursor:pointer;padding:7px;border-radius:7px;display:grid;margin:0}
+.pw .eye:hover{background:var(--soft);color:var(--ink)}
+.caps{font-size:12px;color:var(--warn);background:var(--warn-bg);border-radius:7px;padding:5px 9px}
+.gmsg{font-size:13px;color:var(--bad);min-height:18px;line-height:1.4}
+.gate-card button.p{display:flex;align-items:center;justify-content:center;gap:8px}
+.gate-card button.p:disabled{opacity:.75;cursor:progress}
+.spin{width:15px;height:15px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;display:inline-block;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.steps{list-style:none;margin:0;padding:10px 12px;display:grid;gap:8px;font-size:13.5px;background:var(--soft);border-radius:10px}
+.steps li{display:flex;gap:9px;align-items:center;color:var(--muted)}
+.steps li::before{content:'';width:12px;height:12px;flex:0 0 12px;border-radius:50%;border:2px solid var(--line)}
+.steps li.on{color:var(--ink);font-weight:650}
+.steps li.on::before{border-color:var(--brand);border-right-color:transparent;animation:spin .8s linear infinite}
+.steps li.done{color:var(--ok)}
+.steps li.done::before{background:var(--ok);border-color:var(--ok)}
+.steps li.err{color:var(--bad);font-weight:650}
+.steps li.err::before{background:var(--bad);border-color:var(--bad)}
+.steps li .t{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--muted);font-weight:500;font-size:12px;white-space:nowrap}
+.ghint{font-size:12px;color:var(--muted);margin:0}
 .scrim{display:none}
 @media (max-width:820px){
   #side{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .2s ease;width:264px;flex-basis:264px;box-shadow:0 0 40px rgba(0,0,0,.3)}
@@ -251,7 +283,12 @@ details.sec>.in{padding:0 18px 18px}
 }
 @container (max-width:760px){
   .tw table,.tw tbody,.tw tfoot{display:block;width:100%}
-  .tw thead{display:none}
+  .tw thead{display:block}
+  .tw thead tr{display:flex!important;flex-wrap:wrap;gap:5px;align-items:center;padding:4px 0 8px!important}
+  .tw thead tr::before{content:'Sort:';font-size:11.5px;font-weight:600;color:var(--muted)}
+  .tw thead tr:not(:has(th[data-sort])){display:none!important}
+  .tw thead th{position:static!important;display:inline-block;border:1px solid var(--line)!important;border-radius:999px;padding:2px 9px!important;font-size:11.5px;background:var(--card)!important;white-space:nowrap!important;text-align:left!important}
+  .tw thead th:not([data-sort]){display:none}
   .tw tr{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:6px 12px;padding:10px 2px;border-bottom:1px solid var(--line)}
   .tw td{display:block;border:0;padding:0;min-width:0;text-align:left!important;overflow-wrap:anywhere}
   .tw td[data-l]:not([data-l=""])::before{content:attr(data-l);display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:2px;overflow-wrap:normal}
@@ -327,33 +364,25 @@ input,select,textarea{font-weight:500}
 
 <!-- LOGIN -->
 <div id="gate">
-  <form class="gate-card" id="gUserForm">
+  <div class="gate-card" id="gCard">
     <svg width="44" height="44" viewBox="0 0 30 30" aria-hidden="true"><rect x="1" y="1" width="28" height="28" rx="7" fill="#0f6a73"/><g stroke="#e3a613" stroke-width="1.6"><path d="M10 6v18M15 6v18M20 6v18M6 10h18M6 15h18M6 20h18"/></g></svg>
     <h1>IMS Stock Dashboard</h1>
     <p>Jain Wire Netting, Angamaly</p>
-    <b style="font-size:14px">User login</b>
-    <label>Password<input id="gPass" type="password" autocomplete="current-password"></label>
-    <button class="b p" type="button" id="gUserGo">Open current stock</button>
-    <div id="gUMsg" class="small" style="color:var(--bad);min-height:18px"></div>
-    <button class="alt" type="button" id="toAdmin">or log in as Admin ›</button>
+    <div class="gtabs" id="gTabs" role="tablist" aria-label="Login type">
+      <button type="button" role="tab" data-gt="user" class="on">User</button>
+      <button type="button" role="tab" data-gt="admin" id="toAdmin">Admin</button>
+    </div>
+    <form id="gForm" autocomplete="on">
+      <label id="gUserRow" hidden>Username<input id="gAUser" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
+      <label>Password<span class="pw"><input id="gPass" type="password" autocomplete="current-password"><button type="button" class="eye" id="gEye" title="Show password" aria-label="Show password"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path id="gEyeX" d="M4 4l16 16" hidden/></svg></button></span></label>
+      <div class="caps" id="gCaps" hidden>Caps Lock is on</div>
+      <button class="b p" type="submit" id="gGo"><span class="spin" id="gSpin" hidden></span><span id="gGoTxt">Open current stock</span></button>
+    </form>
+    <div id="gMsg" class="gmsg" role="alert"></div>
+    <ol class="steps" id="gSteps" hidden><li data-s="1">Checking the login</li><li data-s="2">Loading stock and entries from the sheet</li><li data-s="3">Building the reports</li></ol>
+    <div class="row" id="gLoadBtns" hidden><button class="b" type="button" id="gRetry">Try again</button><button class="alt" type="button" id="gBack">‹ Log in again</button></div>
+    <p class="ghint" id="gHint">You stay logged in on this device for 14 days, until you log out.</p>
     <div class="small muted" id="gVer"></div>
-  </form>
-  <form class="gate-card" id="gAdminForm" hidden>
-    <svg width="44" height="44" viewBox="0 0 30 30" aria-hidden="true"><rect x="1" y="1" width="28" height="28" rx="7" fill="#0f6a73"/><g stroke="#e3a613" stroke-width="1.6"><path d="M10 6v18M15 6v18M20 6v18M6 10h18M6 15h18M6 20h18"/></g></svg>
-    <h1>Admin login</h1>
-    <p>IMS Stock Dashboard · Jain Wire Netting, Angamaly</p>
-    <label>Username<input id="gAUser" autocomplete="username"></label>
-    <label>Password<input id="gAPass" type="password" autocomplete="current-password"></label>
-    <button class="b p" type="button" id="gAdminGo">Log in</button>
-    <div id="gAMsg" class="small" style="color:var(--bad);min-height:18px"></div>
-    <button class="alt" type="button" id="toUser">‹ back to User login</button>
-  </form>
-  <div class="gate-card" id="gLoading" hidden>
-    <svg width="44" height="44" viewBox="0 0 30 30" aria-hidden="true"><rect x="1" y="1" width="28" height="28" rx="7" fill="#0f6a73"/><g stroke="#e3a613" stroke-width="1.6"><path d="M10 6v18M15 6v18M20 6v18M6 10h18M6 15h18M6 20h18"/></g></svg>
-    <h1>IMS Stock Dashboard</h1>
-    <p id="gLoadMsg">Loading the stock from the sheet…</p>
-    <div id="gLoadErr" class="small" style="color:var(--bad)"></div>
-    <div class="row"><button class="b" type="button" id="gRetry" hidden>Try again</button><button class="alt" type="button" id="gBack" hidden>‹ Log in again</button></div>
   </div>
 </div>
 
@@ -378,6 +407,7 @@ input,select,textarea{font-weight:500}
       <div class="sh">Stock</div>
       <a data-t="r-restock">Restock list</a>
       <a data-t="r-move">Stock movement</a>
+      <a data-t="r-xfer">Transfers</a>
       <a data-t="r-neg">Negative stock</a>
       <a data-t="r-month">Month-end report</a>
       <div class="sh">Production</div>
@@ -414,6 +444,7 @@ input,select,textarea{font-weight:500}
   <section class="tab" id="t-r-slow"></section>
   <section class="tab" id="t-r-restock"></section>
   <section class="tab" id="t-r-move"></section>
+  <section class="tab" id="t-r-xfer"></section>
   <section class="tab" id="t-r-neg"></section>
   <section class="tab" id="t-r-month"></section>
   <section class="tab" id="t-r-prod"></section>
@@ -431,7 +462,7 @@ input,select,textarea{font-weight:500}
 <script>
 'use strict';
 /* ───────── shell: login, loading the data, theme ───────── */
-const VERSION = 'v1.0.4', SHEET_SCRIPT = 'v2.0.0', ENTRY_URL = 'entry/';
+const VERSION = 'v1.2.0', SHEET_SCRIPT = 'v2.2.0', ENTRY_URL = 'entry/';
 const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbws7kmv6v4aR-UvP22BTQS7DtoMMFbrv4aKdbseCPuthXisC3wI7e9U-SOWMU_uDng/exec';
 const SESS_KEY = 'ims.session', URL_KEY = 'ims.url', CACHE_KEY = 'imsDash.cache';
 const $$ = id => document.getElementById(id);
@@ -472,20 +503,26 @@ function buildD(a) {
   const P = a.products.map(p => Object.assign({}, p)), idx = new Map();
   P.forEach((p, i) => { if (!idx.has(low(p.p))) idx.set(low(p.p), i); });
   const dk = s => { const m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(s || ''); return m ? Date.UTC(+m[3], +m[2] - 1, +m[1]) / 864e5 : null; };
+  // godowns: WH / BB2 / BB1 + branches from the GODOWNS tab; a name in column F that is not in the tab counts as a branch
+  const gods = [], godk = [], gIdx = new Map();
+  const addGod = (n, k) => { const key = low(n); if (!key || gIdx.has(key)) return gIdx.get(key); const nm = LOCS0.includes(String(n).toUpperCase()) ? String(n).toUpperCase() : n; gIdx.set(key, gods.length); gods.push(nm); godk.push(LOCS0.includes(nm) ? 'internal' : k || 'branch'); return gIdx.get(key); };
+  LOCS0.forEach(l => addGod(l, 'internal'));
+  (a.godowns || []).forEach(g => addGod(g.n, g.k));
   const rows = [];
   if (a.log) for (const dir of ['IN', 'OUT']) for (const r of a.log[dir] || []) {
     const [, date, prod, q, loc, typ] = r; const d = dk(date);
     if (q == null || d == null || !LOCS0.includes(loc) || !prod) continue;
-    rows.push([d, prod, q, loc, typ, dir]);
+    const g = r[7] ? addGod(String(r[7]).replace(/\s+/g, ' ').trim()) : -1;
+    rows.push([d, prod, q, loc, typ, dir, g == null ? -1 : g]);
   }
   const base = rows.length ? Math.min(...rows.map(r => r[0])) : Math.floor(Date.now() / 864e5);
   const mv = [];
-  for (const [d, prod, q, loc, typ, dir] of rows) {
+  for (const [d, prod, q, loc, typ, dir, g] of rows) {
     const k = low(prod);
     if (!idx.has(k)) { P.push({ c: '(not in CURRENT STOCK)', p: prod, WH: 0, BB1: 0, BB2: 0, tot: 0, red: null, green: null, wire: '', w: null }); idx.set(k, P.length - 1); }
     let t = TYPES.includes(typ) ? typ : '';
     if (dir === 'OUT' && t === 'Stock Correction') t = 'Stock correction';
-    mv.push([d - base, idx.get(k), Math.round(q * 1000) / 1000, LOCS0.indexOf(loc), TYPES.indexOf(t), dir === 'IN' ? 0 : 1]);
+    mv.push([d - base, idx.get(k), Math.round(q * 1000) / 1000, LOCS0.indexOf(loc), TYPES.indexOf(t), dir === 'IN' ? 0 : 1, g]);
   }
   mv.sort((x, y) => x[0] - y[0]);
   const prods = P.map(p => {
@@ -499,87 +536,211 @@ function buildD(a) {
   const sales = TYPES.indexOf('Sales'), sd = mv.filter(m => m[4] === sales).map(m => m[0]);
   const asOf = sd.length ? Math.max(...sd) : (mv.length ? Math.max(...mv.map(m => m[0])) : 0);
   const b = new Date(base * 864e5);
-  return { base: [b.getUTCFullYear(), b.getUTCMonth(), b.getUTCDate()], asOf, types: TYPES, locs: LOCS0, prods, mv, kgCats: KG_CATS, rawCats: RAW_CATS,
+  const xf = dk(a.xferFrom || '05-11-2026');
+  return { base: [b.getUTCFullYear(), b.getUTCMonth(), b.getUTCDate()], asOf, types: TYPES, locs: LOCS0, prods, mv, kgCats: KG_CATS, rawCats: RAW_CATS, gods, godk, xferDay: xf == null ? 1e9 : xf - base, xferFrom: a.xferFrom || '05-11-2026',
     catOrder: (a.settings && a.settings.categoryOrder) || [], at: a.at || '', hasLog: !!a.log };
 }
 
-function gateShow(which, msg) {
+/* ───────── saved copy in this browser (IndexedDB: no size limit like localStorage) ───────── */
+const IDB = {
+  p: null,
+  open() {
+    if (!this.p) this.p = new Promise(ok => {
+      let done = false; const fin = v => { if (!done) { done = true; ok(v); } };
+      setTimeout(() => fin(null), 3000);
+      try { const r = indexedDB.open('ims', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => fin(r.result); r.onerror = () => fin(null); r.onblocked = () => fin(null); } catch (e) { fin(null); }
+    });
+    return this.p;
+  },
+  async get(k) { const db = await this.open(); if (!db) return null; return new Promise(ok => { try { const q = db.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => ok(q.result || null); q.onerror = () => ok(null); } catch (e) { ok(null); } }); },
+  async set(k, v) { const db = await this.open(); if (!db) return false; return new Promise(ok => { try { const t = db.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = () => ok(true); t.onerror = () => ok(false); } catch (e) { ok(false); } }); },
+  async del(k) { const db = await this.open(); if (!db) return; return new Promise(ok => { try { const t = db.transaction('kv', 'readwrite'); t.objectStore('kv').delete(k); t.oncomplete = () => ok(); t.onerror = () => ok(); } catch (e) { ok(); } }); }
+};
+try { localStorage.removeItem(CACHE_KEY); } catch (e) {}   // v1.0.x kept the copy in localStorage (too small); it now lives in IndexedDB
+const cacheKey = () => 'dash|' + SH.role + '|' + SH.url;
+const maxRow = rows => { let m = 2; if (rows) for (const r of rows) if (r[0] > m) m = r[0]; return m; };
+const hm = t => { const d = new Date(t); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+
+/* ───────── login screen ───────── */
+let GT = 'user'; try { GT = localStorage.getItem('imsDash.gt') === 'admin' ? 'admin' : 'user'; } catch (e) {}
+try { $$('gAUser').value = localStorage.getItem('imsDash.lastUser') || ''; } catch (e) {}
+function gateTab(t) {
+  GT = t; try { localStorage.setItem('imsDash.gt', t); } catch (e) {}
+  document.querySelectorAll('#gTabs [data-gt]').forEach(b => { b.classList.toggle('on', b.dataset.gt === t); b.setAttribute('aria-selected', b.dataset.gt === t); });
+  $$('gUserRow').hidden = t !== 'admin'; $$('gGoTxt').textContent = t === 'admin' ? 'Log in' : 'Open current stock'; $$('gMsg').textContent = '';
+  setTimeout(() => (t === 'admin' && !$$('gAUser').value ? $$('gAUser') : $$('gPass')).focus(), 30);
+}
+let warmed = false;
+function gateShow(which, msg) {   // which: 'login' | 'loading'
   $$('gate').hidden = false;
-  $$('gUserForm').hidden = which !== 'user'; $$('gAdminForm').hidden = which !== 'admin'; $$('gLoading').hidden = which !== 'loading';
-  if (which === 'user') { $$('gUMsg').textContent = msg || ''; setTimeout(() => $$('gPass').focus(), 30); }
-  if (which === 'admin') { $$('gAMsg').textContent = msg || ''; setTimeout(() => ($$('gAUser').value ? $$('gAPass') : $$('gAUser')).focus(), 30); }
+  const load = which === 'loading';
+  $$('gForm').hidden = load; $$('gTabs').hidden = load; $$('gHint').hidden = load;
+  $$('gSteps').hidden = !load; $$('gLoadBtns').hidden = true;
+  $$('gMsg').textContent = msg || '';
+  if (!load) { gateBusy(false); gateTab(GT); }
+  // wake the sheet script while the password is typed (the first call of the day is the slow one)
+  if (!warmed) { warmed = true; try { fetch(SH.url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {}); } catch (e) {} }
 }
-async function doLogin(username, password, msgEl) {
-  if (!password) { msgEl.textContent = 'Enter the password.'; return; }
-  msgEl.innerHTML = '<span class="muted">Checking…</span>';
+function gateBusy(on) {
+  $$('gGo').disabled = on; $$('gSpin').hidden = !on; $$('gPass').readOnly = on; $$('gAUser').readOnly = on;
+  if (on) { $$('gGoTxt').textContent = 'Please wait…'; $$('gSteps').hidden = false; } else { $$('gGoTxt').textContent = GT === 'admin' ? 'Log in' : 'Open current stock'; }
+}
+let stepT0 = 0, stepTimer = null, stepN = 0;
+function step(n, err) {
+  stepN = n; stepT0 = Date.now(); clearInterval(stepTimer);
+  document.querySelectorAll('#gSteps li').forEach(li => {
+    const s = +li.dataset.s; li.className = s < n ? 'done' : s === n ? (err ? 'err' : 'on') : '';
+    const t = li.querySelector('.t'); if (t) t.remove();
+  });
+  if (SH.role === 'user') $$('gSteps').querySelector('[data-s="2"]').firstChild.textContent = 'Loading the current stock';
+  if (err || !n) return;
+  const li = $$('gSteps').querySelector('[data-s="' + n + '"]');
+  stepTimer = setInterval(() => { const s = Math.round((Date.now() - stepT0) / 1000); if (s < 2) return; let t = li.querySelector('.t'); if (!t) { t = document.createElement('span'); t.className = 't'; li.appendChild(t); } t.textContent = s + ' s'; }, 500);
+}
+function stepFail(msg) {
+  step(stepN || 2, true); gateBusy(false);
+  $$('gMsg').textContent = msg; $$('gLoadBtns').hidden = false;
+}
+$$('gTabs').addEventListener('click', e => { const b = e.target.closest('[data-gt]'); if (b && !$$('gGo').disabled) gateTab(b.dataset.gt); });
+$$('gEye').onclick = () => { const p = $$('gPass'), show = p.type === 'password'; p.type = show ? 'text' : 'password'; $$('gEyeX').hidden = !show; $$('gEye').title = show ? 'Hide password' : 'Show password'; p.focus(); };
+['keydown', 'keyup'].forEach(ev => [$$('gPass'), $$('gAUser')].forEach(el => el.addEventListener(ev, e => { if (e.getModifierState) $$('gCaps').hidden = !e.getModifierState('CapsLock'); })));
+$$('gForm').addEventListener('submit', e => { e.preventDefault(); doLogin(); });
+$$('gRetry').onclick = () => { if (SH.token) { $$('gLoadBtns').hidden = true; $$('gMsg').textContent = ''; loadFull(); } else { $$('gLoadBtns').hidden = true; gateShow('login'); } };
+$$('gBack').onclick = () => logout('');
+
+async function doLogin() {
+  const admin = GT === 'admin', u = admin ? $$('gAUser').value.trim() : '', pw = $$('gPass').value;
+  if (admin && !u) { $$('gMsg').textContent = 'Enter your username.'; $$('gAUser').focus(); return; }
+  if (!pw) { $$('gMsg').textContent = 'Enter the password.'; $$('gPass').focus(); return; }
+  $$('gMsg').textContent = ''; $$('gLoadBtns').hidden = true; gateBusy(true); step(1);
+  const slow = setTimeout(() => step(2), 1200);   // the sheet checks the login and loads the data in one trip
   try {
-    const j = await api('login', username ? { username, password } : { password });
-    if (!j.ok) { msgEl.textContent = j.error === 'Wrong password' && username ? 'The sheet script is still the old version. Paste Code.gs ' + SHEET_SCRIPT + ' and deploy a new version.' : j.error; return; }
-    SH.token = j.token; SH.role = j.role; SH.name = j.name;
-    sessWrite({ token: j.token, role: j.role, name: j.name, user: username || '', at: Date.now() });
-    try { localStorage.removeItem(CACHE_KEY); } catch (e) {}
-    $$('gPass').value = ''; $$('gAPass').value = '';
-    loadData();
-  } catch (e) { msgEl.textContent = netMsg(e); }
+    const j = await api('login', Object.assign(admin ? { username: u, password: pw } : { password: pw }, { load: 'auto' }));
+    clearTimeout(slow);
+    if (!j.ok) { step(0); gateBusy(false); $$('gSteps').hidden = true; $$('gMsg').textContent = j.error === 'Wrong password' && admin ? 'The sheet script is still the old version. Paste Code.gs ' + SHEET_SCRIPT + ' and deploy a new version.' : j.error; $$('gPass').select(); return; }
+    SH.token = j.token; SH.role = j.role; SH.name = j.name; SH.srv = j.version || '';
+    sessWrite({ token: j.token, role: j.role, name: j.name, user: u, at: Date.now() });
+    if (admin) try { localStorage.setItem('imsDash.lastUser', u); } catch (e) {}
+    $$('gPass').value = ''; $$('gPass').type = 'password'; $$('gEyeX').hidden = true;
+    if (j.data && j.data.ok) { step(3); await new Promise(r => setTimeout(r, 30)); openWith(j.data, true); }
+    else { step(2); await loadFull(); }   // Sheet Script before v2.1.0: data comes in a second call
+  } catch (e) { clearTimeout(slow); stepFail(netMsg(e)); }
 }
-$$('toAdmin').onclick = () => gateShow('admin');
-$$('toUser').onclick = () => gateShow('user');
-$$('gUserGo').onclick = () => doLogin('', $$('gPass').value, $$('gUMsg'));
-$$('gAdminGo').onclick = () => doLogin($$('gAUser').value.trim(), $$('gAPass').value, $$('gAMsg'));
-$$('gUserForm').onsubmit = e => { e.preventDefault(); $$('gUserGo').click(); };
-$$('gAdminForm').onsubmit = e => { e.preventDefault(); $$('gAdminGo').click(); };
-$$('gPass').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $$('gUserGo').click(); } });
-['gAUser', 'gAPass'].forEach(id => $$(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $$('gAdminGo').click(); } }));
 function logout(msg) {
-  sessWrite(null); SH.token = ''; try { localStorage.removeItem(CACHE_KEY); } catch (e) {}
+  sessWrite(null); SH.token = ''; IDB.del(cacheKey());
   if (SH.started) { location.reload(); return; }
-  gateShow('user', msg);
+  gateShow('login', msg);
 }
 $$('logout').onclick = () => logout('');
-$$('gBack').onclick = () => logout('');
-$$('gRetry').onclick = () => loadData();
-$$('refresh').onclick = () => loadData(true);
-$$('newData').onclick = () => location.reload();
 
+/* ───────── data: first load, then a check every minute ───────── */
 const sig = D => D.mv.length + '|' + D.prods.length + '|' + D.prods.reduce((t, p) => t + Math.abs(p[2]) + Math.abs(p[3]) + Math.abs(p[4]), 0).toFixed(3);
-function cacheRead() { try { const c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); return c && c.role === SH.role && c.url === SH.url ? c : null; } catch (e) { return null; } }
-function cacheWrite(D) { try { localStorage.setItem(CACHE_KEY, JSON.stringify({ role: SH.role, url: SH.url, D })); } catch (e) { try { localStorage.removeItem(CACHE_KEY); } catch (x) {} } }
-async function loadData(manual) {
-  if (!SH.started) { gateShow('loading'); $$('gLoadErr').textContent = ''; $$('gRetry').hidden = true; $$('gBack').hidden = true; $$('gLoadMsg').textContent = SH.role === 'user' ? 'Loading the current stock…' : 'Loading stock and every STOCK IN / STOCK OUT row… (about 10 seconds)'; }
-  if (manual) { $$('refresh').disabled = true; $$('asOf').textContent = 'Updating…'; }
+function stripRaw(j) { const r = Object.assign({}, j); delete r.ok; delete r.delta; delete r.same; return r; }
+function saveRaw() { IDB.set(cacheKey(), { raw: SH.raw, at: Date.now(), fullAt: SH.fullAt || 0, role: SH.role }); }
+// first open of the data (after login, or from the saved copy)
+function openWith(raw, fresh) {
+  SH.raw = stripRaw(raw); if (fresh) { SH.fullAt = Date.now(); SH.checkedAt = Date.now(); saveRaw(); }
+  const D = buildD(SH.raw); SH.sig = sig(D);
+  $$('gate').hidden = true; clearInterval(stepTimer); gateBusy(false);
+  SH.started = true; startApp(D, SH.role, SH.name, null);
+  live(fresh ? 'ok' : 'busy');
+  startSyncLoop();
+  if (!fresh) sync({});
+}
+async function loadFull() {
+  $$('gate').hidden = false; $$('gForm').hidden = true; $$('gTabs').hidden = true; $$('gHint').hidden = true; $$('gSteps').hidden = false; $$('gLoadBtns').hidden = true;
+  step(2);
   try {
     const j = await api(SH.role === 'user' ? 'stock' : 'dash');
     if (!j.ok) {
-      if (j.auth) { logout(j.error); return; }
+      if (j.auth) { step(0); logout(j.error); return; }
       throw new Error(j.error === 'Wrong password' ? 'The sheet script is still the old version. Paste Code.gs ' + SHEET_SCRIPT + ' and deploy a new version.' : j.error);
     }
-    const D = buildD(j);
-    const old = cacheRead();
-    cacheWrite(D);
-    if (!SH.started) { $$('gate').hidden = true; SH.started = true; startApp(D, SH.role, SH.name); }
-    else if (manual) location.reload();
-    else if (!old || sig(old.D) !== sig(D)) $$('newData').hidden = false;
-  } catch (e) {
-    if (!SH.started) { $$('gLoadMsg').textContent = 'Could not load the data.'; $$('gLoadErr').textContent = netMsg(e); $$('gRetry').hidden = false; $$('gBack').hidden = false; }
-    else { $$('asOf').textContent = 'Offline · ' + netMsg(e).slice(0, 60); }
-  } finally { if (manual) $$('refresh').disabled = false; }
+    step(3); await new Promise(r => setTimeout(r, 30));
+    openWith(j, true);
+  } catch (e) { stepFail('Could not load the data. ' + netMsg(e)); }
+}
+// header pill: entries up to … · checked hh:mm
+function live(state, note) {
+  const el = $$('asOf'); if (!el || !SH.raw) return;
+  const D0 = SH.lastD;
+  el.dataset.st = state;
+  const base = el.dataset.base || '';
+  el.textContent = base + (state === 'busy' ? ' · checking…' : state === 'off' ? ' · offline' + (note ? ' (' + note.slice(0, 50) + ')' : '') : SH.checkedAt ? ' · checked ' + hm(SH.checkedAt) : '') + (note && state === 'ok' ? ' · ' + note : '');
+  el.title = state === 'off' ? 'Could not reach the sheet. Showing the saved copy; it will try again every minute.' : 'The tool checks the sheet for changes every minute.';
+}
+let syncing = false;
+async function sync(o) {
+  o = o || {};
+  if (syncing || !SH.token || !SH.raw) return;
+  const v21 = !!SH.raw.rev;   // Sheet Script v2.1.0 or newer answers "same / only new rows"
+  if (!v21 && !o.manual) return;
+  syncing = true; live('busy');
+  if (o.manual) $$('refresh').disabled = true;
+  try {
+    const full = o.full || !v21 || Date.now() - (SH.fullAt || 0) > 30 * 60e3;   // a full reload every 30 minutes, to be safe
+    const since = full ? null : { rev: SH.raw.rev, IN: maxRow(SH.raw.log && SH.raw.log.IN), OUT: maxRow(SH.raw.log && SH.raw.log.OUT) };
+    const j = await api(SH.role === 'user' ? 'stock' : 'dash', since ? { since } : {});
+    if (!j.ok) { if (j.auth) { logout(j.error); return; } throw new Error(j.error); }
+    SH.checkedAt = Date.now(); if (!since) SH.fullAt = Date.now();
+    if (j.same) { SH.raw.rev = j.rev; saveRaw(); live('ok'); return; }
+    let added = 0;
+    if (j.delta && SH.raw.log) {
+      added = j.log.IN.length + j.log.OUT.length;
+      SH.raw = Object.assign(stripRaw(j), { log: { IN: SH.raw.log.IN.concat(j.log.IN), OUT: SH.raw.log.OUT.concat(j.log.OUT) } });
+    } else SH.raw = stripRaw(j);
+    saveRaw();
+    const D = buildD(SH.raw), s = sig(D);
+    if (s === SH.sig && !o.manual) { live('ok'); return; }
+    SH.sig = s;
+    applyData(D, added ? added + ' new row' + (added === 1 ? '' : 's') : 'updated');
+  } catch (e) { live('off', netMsg(e)); }
+  finally { syncing = false; if (o.manual) $$('refresh').disabled = false; }
+}
+// new figures go straight into the open page; while a box is being typed in or an item card is open, it waits
+function uiBusy() {
+  const a = document.activeElement;
+  return $$('modal').classList.contains('on') || document.body.classList.contains('drawer') || !!(a && a.closest && a.closest('main') && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName));
+}
+function applyData(D, note) {
+  if (uiBusy()) { SH.pending = [D, note]; $$('newData').hidden = false; live('ok', 'new figures waiting'); return; }
+  SH.pending = null; $$('newData').hidden = true;
+  const keep = window.__APP_STATE ? window.__APP_STATE() : null, y = window.scrollY;
+  startApp(D, SH.role, SH.name, keep);
+  window.scrollTo(0, y);
+  live('ok', note);
+}
+$$('newData').onclick = () => { if (SH.pending) { const [D, n] = SH.pending; SH.pending = null; document.activeElement && document.activeElement.blur && document.activeElement.blur(); $$('modal').classList.remove('on'); applyData(D, n); } };
+$$('refresh').onclick = () => sync({ manual: true });
+let loopOn = false;
+function startSyncLoop() {
+  if (loopOn) return; loopOn = true;
+  setInterval(() => {
+    if (SH.pending && !uiBusy()) { const [D, n] = SH.pending; applyData(D, n); }
+    if (document.visibilityState === 'visible' && Date.now() - (SH.checkedAt || 0) >= 58000) sync({});
+  }, 5000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && Date.now() - (SH.checkedAt || 0) >= 30000) sync({}); });
+  window.addEventListener('online', () => sync({}));
 }
 $$('ver').textContent = VERSION; $$('gVer').textContent = VERSION + ' · needs Sheet Script ' + SHEET_SCRIPT;
-// start: a saved login opens straight away (from the saved copy first, then fresh figures)
-function startShell() {
+// start: a saved login opens straight away from the saved copy, then checks the sheet
+async function startShell() {
   const s = sessRead();
-  if (!s) { gateShow('user'); return; }
+  if (!s) { gateShow('login'); return; }
   SH.token = s.token; SH.role = s.role; SH.name = s.name;
-  const c = cacheRead();
-  if (c) { $$('gate').hidden = true; SH.started = true; startApp(c.D, SH.role, SH.name); loadData(); }
-  else loadData();
+  const c = await IDB.get(cacheKey());
+  if (c && c.raw && c.role === SH.role) { SH.fullAt = c.fullAt || 0; SH.checkedAt = 0; openWith(c.raw, false); }
+  else loadFull();
 }
 </script>
 
 <script>
 /* ───────── the dashboard itself (runs once the data is in) ───────── */
-function startApp(D, ROLE0, WHO0) {
+function startApp(D, ROLE0, WHO0, KEEP) {
 'use strict';
+// startApp runs again when new figures arrive: the listeners of the previous run are removed first
+if (window.__APP_AC) window.__APP_AC.abort();
+const AC = window.__APP_AC = new AbortController(), SIG = { signal: AC.signal };
 
 /* ───────── basics ───────── */
 const $ = id => document.getElementById(id);
@@ -647,17 +808,39 @@ const PERIODS = {
   d30: { l: 'Last 30 days', r: () => [ASOF - 29, ASOF] },
   all: { l: 'All data', r: () => [0, ASOF] }
 };
+// Custom period (DD-MM-YYYY to DD-MM-YYYY), shared by the reports that have period buttons
+const CUSTOM = { from: '', to: '' };
+function customRange() { const a = dmyDay(CUSTOM.from), b = dmyDay(CUSTOM.to); return a == null || b == null ? null : [Math.max(0, Math.min(a, b)), Math.min(ASOF, Math.max(a, b))]; }
+PERIODS.custom = { l: 'Custom', r: () => customRange() || [ASOF - 29, ASOF] };
+function custBar(per) {
+  if (per !== 'custom') return '';
+  return '<div class="row filters cbar"><span class="mvcust"><input class="cIn" data-c="from" inputmode="numeric" placeholder="DD-MM-YYYY" value="' + esc(CUSTOM.from) + '"> to <input class="cIn" data-c="to" inputmode="numeric" placeholder="DD-MM-YYYY" value="' + esc(CUSTOM.to) + '"><button class="b" type="button" data-cgo>Show</button></span>' +
+    (customRange() ? '' : '<span class="small" style="color:var(--bad)">Enter both dates as DD-MM-YYYY. Showing the last 30 days until then.</span>') + '</div>';
+}
+document.addEventListener('input', e => { const el = e.target; if (!el.classList || !el.classList.contains('cIn')) return; let v = el.value.replace(/\D/g, '').slice(0, 8), o = v.slice(0, 2); if (v.length > 2) o += '-' + v.slice(2, 4); if (v.length > 4) o += '-' + v.slice(4); el.value = o; }, SIG);
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('cIn')) { e.preventDefault(); const g = e.target.closest('.cbar').querySelector('[data-cgo]'); g && g.click(); } }, SIG);
+document.addEventListener('click', e => {
+  const g = e.target.closest('[data-cgo]'); if (!g) return;
+  const bar = g.closest('.cbar'); CUSTOM.from = bar.querySelector('[data-c=from]').value; CUSTOM.to = bar.querySelector('[data-c=to]').value;
+  g.blur(); if (CUR === 'r-top') { rerenderTM('rep'); } else RENDER[CUR]();
+}, SIG);
+// sum of one type of entry, optionally for one godown (k = index in LOCS, -1 = all)
+function sumTypeG(from, to, type, k) { if (k < 0) return sumType(from, to, type); const out = new Float64Array(P.length); each(from, to, m => { if (m[4] === type && m[3] === k) out[m[1]] += m[2]; }); return out; }
+const gStock = (p, k) => k < 0 ? p.tot : p[LOCS[k]];
 function rangeTxt(r) { return r[0] === r[1] ? dStr(r[0]) : dStr(Math.max(0, r[0])) + ' to ' + dStr(r[1]); }
 function seg(id, opts, cur) { return '<span class="seg" data-seg="' + id + '">' + opts.map(([v, l]) => '<button data-v="' + v + '"' + (v === cur ? ' class="on"' : '') + '>' + l + '</button>').join('') + '</span>'; }
 function perSeg(id, cur, keys) { return seg(id, (keys || ['today', 'week', 'month']).map(k => [k, PERIODS[k].l]), cur); }
-function pLink(p) { return esc(p.p); }   // item names in reports are plain text; the item card opens only from Current stock
+function pLink(p) { return esc(p.p); }
+// item name that opens the entries behind a report figure (period, types, godown) — the reports' own drill-down
+const ENT = {};
+function eLink(p, key) { return ROLE === 'user' ? esc(p.p) : '<a class="il" data-ent="' + key + '|' + p.i + '" title="Show the entries">' + esc(p.p) + '</a>'; }   // item names in reports are plain text; the item card opens only from Current stock
 function csLink(p) { return ROLE === 'user' ? esc(p.p) : '<a class="il" data-item="' + p.i + '">' + esc(p.p) + '</a>'; }
 
 /* tooltip */
 const tip = $('tip');
 function showTip(e, html) { tip.innerHTML = html; tip.style.display = 'block'; const w = tip.offsetWidth, h = tip.offsetHeight; let x = e.clientX + 14, y = e.clientY + 14; if (x + w > innerWidth - 8) x = e.clientX - w - 14; if (y + h > innerHeight - 8) y = e.clientY - h - 14; tip.style.left = x + 'px'; tip.style.top = y + 'px'; }
 function hideTip() { tip.style.display = 'none'; }
-document.addEventListener('mousemove', e => { const t = e.target.closest('[data-tip]'); if (t) showTip(e, t.dataset.tip); else if (!e.target.closest('.chart')) hideTip(); });
+document.addEventListener('mousemove', e => { const t = e.target.closest('[data-tip]'); if (t) showTip(e, t.dataset.tip); else if (!e.target.closest('.chart')) hideTip(); }, SIG);
 
 /* charts: vertical bars (one or more series side by side) or lines, one y-axis */
 function colChart(el, labels, series, opts) {
@@ -700,27 +883,48 @@ function fmtAx(v) { return v >= 1e5 ? (v / 1e5).toFixed(v % 1e5 ? 1 : 0) + 'L' :
 
 /* simple table with sorting */
 const SORTS = {};
+// Default order of a list of items = category order, then the order of CURRENT STOCK (same as Current stock).
+// A report can have its own default (opts.sort / opts.dir), e.g. Restock list = fewest days left first.
+const CATI = new Map(CATS.map((c, i) => [c, i]));
+const catKey = p => (CATI.has(p.c) ? CATI.get(p.c) : 9999) * 1e6 + p.i;
+function catSort(rows) {
+  if (!rows.length) return rows;
+  if (rows[0].pp) return rows.slice().sort((a, b) => catKey(a.pp) - catKey(b.pp));
+  if (rows[0].c != null) return rows.slice().sort((a, b) => (CATI.has(a.c) ? CATI.get(a.c) : 9999) - (CATI.has(b.c) ? CATI.get(b.c) : 9999));
+  return rows;
+}
 function table(id, cols, rows, opts) {
   opts = opts || {};
-  const st = SORTS[id] || (SORTS[id] = { col: opts.sort || null, dir: opts.dir || -1 });
+  const d0 = { col: opts.sort || null, dir: opts.dir || -1 };
+  const st = SORTS[id] || (SORTS[id] = { col: d0.col, dir: d0.dir });
+  const moved = st.col !== d0.col || (st.col != null && st.dir !== d0.dir);
   if (st.col != null) { const c = cols.find(x => x.k === st.col); if (c) rows = rows.slice().sort((a, b) => { const x = c.sv ? c.sv(a) : a[c.k], y = c.sv ? c.sv(b) : b[c.k]; return (typeof x === 'string' ? x.localeCompare(y) : (x == null ? -1e15 : x) - (y == null ? -1e15 : y)) * st.dir; }); }
+  else rows = catSort(rows);
   const lim = opts.limit || 400, shown = rows.slice(0, lim);
-  let h = '<div class="tw"' + (opts.maxH ? ' style="max-height:' + opts.maxH + 'px;overflow:auto"' : '') + '><table data-tid="' + id + '"><thead><tr>' +
+  const lbl = k => { const c = cols.find(x => x.k === k); return c ? String(c.l).replace(/<[^>]+>/g, '') : k; };
+  let h = moved && opts.rerender ? '<div class="tsort noprint">Sorted by <b>' + esc(lbl(st.col)) + (st.dir > 0 ? ' ▲' : ' ▼') + '</b><button type="button" data-sreset="' + id + '">↺ Default order (' + (d0.col ? esc(lbl(d0.col)) + (d0.dir > 0 ? ' ▲' : ' ▼') : 'category') + ')</button></div>' : '';
+  h += '<div class="tw"' + (opts.maxH ? ' style="max-height:' + opts.maxH + 'px;overflow:auto"' : '') + '><table data-tid="' + id + '"><thead><tr>' +
     cols.map(c => '<th' + (c.n ? ' class="n"' : '') + (c.k ? ' data-sort="' + c.k + '"' : '') + '>' + c.l + (st.col === c.k && c.k ? '<span class="ar">' + (st.dir > 0 ? '▲' : '▼') + '</span>' : '') + '</th>').join('') + '</tr></thead><tbody>';
   h += shown.map(r => '<tr>' + cols.map(c => '<td' + (c.n ? ' class="n' + (c.neg && (c.sv ? c.sv(r) : r[c.k]) < 0 ? ' neg' : '') + '"' : '') + '>' + (c.f ? c.f(r) : (c.n ? fmt(r[c.k]) : esc(r[c.k]))) + '</td>').join('') + '</tr>').join('');
   if (!rows.length) h += '<tr><td colspan="' + cols.length + '" class="muted">Nothing to show.</td></tr>';
   h += '</tbody>' + (opts.foot ? '<tfoot>' + opts.foot + '</tfoot>' : '') + '</table></div>';
   if (rows.length > lim) h += '<p class="small muted">Showing ' + lim + ' of ' + rows.length + '.</p>';
-  TABLES[id] = { cols, rows, rerender: opts.rerender };
+  TABLES[id] = { cols, rows, rerender: opts.rerender, d0 };
   return h;
 }
 const TABLES = {};
 document.addEventListener('click', e => {
+  const b = e.target.closest('[data-sreset]'); if (!b) return;
+  const t = TABLES[b.dataset.sreset]; if (!t) return;
+  SORTS[b.dataset.sreset] = { col: t.d0.col, dir: t.d0.dir }; t.rerender && t.rerender();
+}, SIG);
+document.addEventListener('click', e => {
   const th = e.target.closest('th[data-sort]'); if (!th) return;
   const id = th.closest('table').dataset.tid, st = SORTS[id], k = th.dataset.sort;
+  if (!TABLES[id].rerender) return;
   if (st.col === k) st.dir = -st.dir; else { st.col = k; st.dir = typeof TABLES[id].rows[0]?.[k] === 'string' ? 1 : -1; }
-  TABLES[id].rerender && TABLES[id].rerender();
-});
+  TABLES[id].rerender();
+}, SIG);
 // download a table for Excel (CSV opens in Excel)
 function csvBtn(id, name) { return '<button class="b noprint" data-csv="' + id + '" data-name="' + esc(name) + '">Download for Excel</button>'; }
 document.addEventListener('click', e => {
@@ -729,23 +933,25 @@ document.addEventListener('click', e => {
   const strip = s => String(s).replace(/<[^>]+>/g, '').replace(/&amp;/g, '&');
   const lines = [t.cols.map(c => '"' + strip(c.l) + '"').join(',')].concat(t.rows.map(r => t.cols.map(c => { const v = c.x ? c.x(r) : (c.sv ? c.sv(r) : r[c.k]); return typeof v === 'number' ? v : '"' + strip(v == null ? '' : v).replace(/"/g, '""') + '"'; }).join(',')));
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv' })); a.download = b.dataset.name + ' ' + dStr(ASOF) + '.csv'; a.click();
-});
+}, SIG);
 
 /* ───────── TOP MOVERS (card used on Dashboard and in the report) ───────── */
 const TM = { dash: { per: 'week', n: 20, m: 'pcs', g: 'cat', open: {} }, rep: { per: 'week', n: 50, m: 'pcs', g: 'item', open: {} } };
 function salesIn(r) { return sumType(r[0], r[1], T['Sales']); }
 function topData(st) {
-  const r = PERIODS[st.per].r(), s = salesIn(r);
-  const items = P.filter(p => p.unit === st.m && s[p.i] > 0).map(p => ({ p, v: measure(p, s[p.i]) })).sort((a, b) => b.v - a.v);
+  const k = st === TM.rep ? godK() : -1;   // the godown picker is on the report only, not on the dashboard card
+  const r = PERIODS[st.per].r(), s = sumTypeG(r[0], r[1], T['Sales'], k);
+  const items = P.filter(p => p.unit === st.m && s[p.i] > 0).map(p => ({ p, v: measure(p, s[p.i]), stk: gStock(p, k) })).sort((a, b) => b.v - a.v);
   const cats = new Map(); items.forEach(x => { const c = cats.get(x.p.c) || { c: x.p.c, v: 0, items: [] }; c.v += x.v; c.items.push(x); cats.set(x.p.c, c); });
-  return { r, items, cats: [...cats.values()].sort((a, b) => b.v - a.v), total: items.reduce((t, x) => t + x.v, 0) };
+  return { r, k, items, cats: [...cats.values()].sort((a, b) => b.v - a.v), total: items.reduce((t, x) => t + x.v, 0) };
 }
 function tmCard(key, title, link) {
   const st = TM[key], d = topData(st), u = st.m === 'kg' ? 'kg' : 'pcs';
   let h = '<div class="card" id="tm-' + key + '"><div class="row" style="justify-content:space-between"><h2>' + title + '</h2>' + (link ? '<a class="go" data-goto="r-top">Full report →</a>' : '') + '</div>' +
-    '<div class="tm-ctl">' + perSeg('tm-' + key + '-per', st.per, key === 'rep' ? ['today', 'yday', 'week', 'month', 'lmonth', 'all'] : null) + seg('tm-' + key + '-n', [[20, 'Top 20'], [50, 'Top 50']], st.n) +
+    '<div class="tm-ctl">' + (key === 'rep' ? godSeg() : '') + perSeg('tm-' + key + '-per', st.per, key === 'rep' ? ['today', 'yday', 'week', 'month', 'lmonth', 'all', 'custom'] : null) + seg('tm-' + key + '-n', [[20, 'Top 20'], [50, 'Top 50']], st.n) +
     seg('tm-' + key + '-m', [['pcs', 'Nos (pieces)'], ['kg', 'Kg']], st.m) + seg('tm-' + key + '-g', [['cat', 'By category'], ['item', 'By item']], st.g) + '</div>' +
-    '<div class="tm-meta"><span>Sales only · ' + rangeTxt(d.r) + ' · ' + (st.m === 'kg' ? 'kg items (wire, coils, nails — nail bags × 25 kg)' : 'piece items (sheets, rolls, bundles)') + '</span><span>' +
+    (key === 'rep' ? custBar(st.per) : '') +
+    '<div class="tm-meta"><span>Sales only' + (d.k < 0 ? '' : ' from ' + LOCS[d.k]) + ' · ' + rangeTxt(d.r) + ' · ' + (st.m === 'kg' ? 'kg items (wire, coils, nails — nail bags × 25 kg)' : 'piece items (sheets, rolls, bundles)') + '</span><span>' +
     (st.g === 'cat' ? 'Click a category to see its items' : '') + '</span></div><div class="tm-body">';
   const max = st.g === 'cat' ? (d.cats[0] ? d.cats[0].v : 1) : (d.items[0] ? d.items[0].v : 1);
   h += '<div class="tm-row head"><span>#</span><span>' + (st.g === 'cat' ? 'Category' : 'Item') + '</span><span class="bar"></span><span class="q">Sold (' + u + ')</span><span class="sk stc">' + (st.g === 'cat' ? 'Items' : 'Stock now') + '</span><span class="stc">' + (st.g === 'cat' ? 'Share' : 'Status') + '</span></div>';
@@ -764,22 +970,23 @@ function tmCard(key, title, link) {
 }
 function itemRow(rk, x, max, cls) {
   const p = x.p;
-  return '<div class="tm-row' + cls + '"><span class="rk">' + rk + '</span><span class="nm"><b>' + pLink(p) + '</b>' + (cls ? '' : '<small>' + esc(p.c) + '</small>') + '</span><span class="bar"><div class="track"><div class="fill" style="width:' + (100 * x.v / max).toFixed(1) + '%"></div></div></span><span class="q">' + fmt(x.v) + '</span><span class="sk stc' + (p.tot < 0 ? ' neg' : '') + '">' + fmt(measure(p, p.tot)) + '</span><span class="stc">' + stTag(statusOf(p)) + '</span></div>';
+  return '<div class="tm-row' + cls + '"><span class="rk">' + rk + '</span><span class="nm"><b>' + pLink(p) + '</b>' + (cls ? '' : '<small>' + esc(p.c) + '</small>') + '</span><span class="bar"><div class="track"><div class="fill" style="width:' + (100 * x.v / max).toFixed(1) + '%"></div></div></span><span class="q">' + fmt(x.v) + '</span><span class="sk stc' + ((x.stk ?? p.tot) < 0 ? ' neg' : '') + '">' + fmt(measure(p, x.stk ?? p.tot)) + '</span><span class="stc">' + stTag(statusOf(p)) + '</span></div>';
 }
 document.addEventListener('click', e => {
   const c = e.target.closest('[data-tmcat]'); if (c && !e.target.closest('a')) { const [k, cat] = c.dataset.tmcat.split('|'); const o = TM[k].open; o[cat] = !o[cat]; rerenderTM(k); return; }
   const b = e.target.closest('[data-seg] button'); if (!b) return;
   const id = b.parentNode.dataset.seg, v = isNaN(+b.dataset.v) ? b.dataset.v : +b.dataset.v;
+  if (v === 'custom' && id !== 'moveP' && !CUSTOM.from) { CUSTOM.from = dStr(Math.max(0, ASOF - 29)); CUSTOM.to = dStr(ASOF); }
   const m = id.match(/^tm-(dash|rep)-(per|n|m|g)$/);
   if (m) { TM[m[1]][m[2]] = v; TM[m[1]].open = {}; rerenderTM(m[1]); return; }
   if (SEGH[id]) SEGH[id](v);
-});
+}, SIG);
 function rerenderTM(k) { const el = $('tm-' + k); const scroll = el.querySelector('.tm-body').scrollTop; el.outerHTML = tmCard(k, k === 'dash' ? 'Top movers' : 'Top movers', k === 'dash'); if (k === 'rep') renderTopExtra(); $('tm-' + k).querySelector('.tm-body').scrollTop = scroll; }
 const SEGH = {};
 
 /* ───────── DASHBOARD ───────── */
-function prodSum(r, measureUnit) {   // production in pcs (piece items) or kg (kg items + piece items with avg weight)
-  let pcs = 0, kg = 0; each(r[0], r[1], m => { if (m[4] !== T['Production']) return; const p = P[m[1]]; if (p.unit === 'pcs') pcs += m[2]; else kg += measure(p, m[2]); });
+function prodSum(r, measureUnit, k) {   // production in pcs (piece items) or kg (kg items + piece items with avg weight); k = one godown
+  let pcs = 0, kg = 0; each(r[0], r[1], m => { if (m[4] !== T['Production'] || (k >= 0 && m[3] !== k)) return; const p = P[m[1]]; if (p.unit === 'pcs') pcs += m[2]; else kg += measure(p, m[2]); });
   return { pcs, kg };
 }
 function salesSum(r) { let pcs = 0, kg = 0; each(r[0], r[1], m => { if (m[4] !== T['Sales']) return; const p = P[m[1]]; if (p.unit === 'pcs') pcs += m[2]; else kg += measure(p, m[2]); }); return { pcs, kg }; }
@@ -835,7 +1042,7 @@ function renderDash() {
   const W = wireRows(), short = W.filter(w => w.days != null && w.days < 15).length;
   h += sec('wire', 'Wire stock', fmt(W.reduce((s, w) => s + Math.max(0, w.stock), 0)) + ' kg of wire · ' + short + ' wires under 15 days left',
     table('dWire', [{ k: 'p', l: 'Wire', f: r => pLink(r.pp) }, { k: 'stock', l: 'Stock kg', n: 1, neg: 1 }, { k: 'use30', l: 'Used + sold / day', n: 1 }, { k: 'days', l: 'Days left', n: 1, f: r => r.days == null ? '—' : (r.days < 15 ? '<b class="neg">' + r.days + '</b>' : r.days) }],
-      W.filter(w => w.use30 > 0).sort((a, b) => (a.days ?? 1e9) - (b.days ?? 1e9)).slice(0, 10), { maxH: 360 }) + '<p class="small"><a class="go" data-goto="r-wire">Wire usage &amp; reorder →</a></p>');
+      W.filter(w => w.use30 > 0).sort((a, b) => (a.days ?? 1e9) - (b.days ?? 1e9)).slice(0, 10), { sort: 'days', dir: 1, maxH: 360, rerender: renderDash }) + '<p class="small"><a class="go" data-goto="r-wire">Wire usage &amp; reorder →</a></p>');
   // Turns
   h += sec('turns', 'Inventory turns', 'Stock turns ' + inv.all.yr.toFixed(1) + '× a year · about ' + Math.round(inv.all.days) + ' days of stock on hand',
     '<div class="grid">' + ['fg', 'rm', 'all'].map(k => tile(inv[k].l, inv[k].yr.toFixed(1) + '×', 'a year', 'about ' + Math.round(inv[k].days) + ' days of stock')).join('') + '</div>' +
@@ -847,7 +1054,7 @@ const DSH = { trendU: 'pcs', catU: 'pcs', open: { att: true } };
 SEGH.trendU = v => { DSH.trendU = v; renderDash(); };
 SEGH.catU = v => { DSH.catU = v; renderDash(); };
 function sec(id, t, sum, body) { return '<details class="sec" data-sec="' + id + '"' + (DSH.open[id] ? ' open' : '') + '><summary><span class="t">' + t + '</span><span class="sum">' + sum + '</span><svg class="cv" width="18" height="18"><use href="#i-chev"/></svg></summary><div class="in">' + body + '</div></details>'; }
-document.addEventListener('toggle', e => { const d = e.target; if (d.dataset && d.dataset.sec) { DSH.open[d.dataset.sec] = d.open; if (d.open) { if (d.dataset.sec === 'trend') drawTrend(); if (d.dataset.sec === 'cats') drawCats(); } } }, true);
+document.addEventListener('toggle', e => { const d = e.target; if (d.dataset && d.dataset.sec) { DSH.open[d.dataset.sec] = d.open; if (d.open) { if (d.dataset.sec === 'trend') drawTrend(); if (d.dataset.sec === 'cats') drawCats(); } } }, { capture: true, signal: AC.signal });
 function tile(l, v, u, s) { return '<div class="tile"><div class="l">' + l + '</div><div class="v">' + v + '<small>' + (u || '') + '</small></div><div class="s">' + (s || '') + '</div></div>'; }
 function attBox(t, n, cls, lines, go) { return '<div class="a"><div class="h"><span class="small" style="font-weight:600">' + t + '</span><b>' + n + '</b></div>' + (lines.length ? '<ul>' + lines.map(l => '<li>' + l + '</li>').join('') + '</ul>' : '<span class="small muted">Nothing new.</span>') + '<a class="go" data-goto="' + go + '" style="margin-top:auto">Open report →</a></div>'; }
 function dailySeries(from, to, type, unit) { const v = []; for (let d = from; d <= to; d++) { let s = 0; for (const m of BYDAY[d]) if (m[4] === type && P[m[1]].unit === unit) s += measure(P[m[1]], m[2]); v.push(r2(s)); } return v; }
@@ -890,7 +1097,7 @@ function drawStock() {
   $('csTable').innerHTML = table('cs', cols, rows, { limit: 700, maxH: 640, rerender: drawStock });
   $('csCount').textContent = rows.length + ' items';
 }
-document.addEventListener('click', e => { const a = e.target.closest('[data-item]'); if (a) { e.preventDefault(); if (ROLE !== 'user') itemCard(P[+a.dataset.item]); } const g = e.target.closest('[data-goto]'); if (g) { e.preventDefault(); showTab(g.dataset.goto); } });
+document.addEventListener('click', e => { const a = e.target.closest('[data-item]'); if (a) { e.preventDefault(); if (ROLE !== 'user') itemCard(P[+a.dataset.item]); } const g = e.target.closest('[data-goto]'); if (g) { e.preventDefault(); showTab(g.dataset.goto); } }, SIG);
 
 const r3 = x => Math.round(x * 1000) / 1000;
 /* item card */
@@ -916,8 +1123,8 @@ function itemCard(p) {
     colChart($('icMonth'), ms.map(m => m.short), [{ n: 'Sales', c: 'var(--s1)', v: sal }, { n: 'Production', c: 'var(--s3)', v: pro }], { unit: u, h: 180 });
   }
 }
-$('modal').addEventListener('click', e => { if (e.target.id === 'modal' || e.target.id === 'mClose') $('modal').classList.remove('on'); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') $('modal').classList.remove('on'); });
+$('modal').addEventListener('click', e => { if (e.target.id === 'modal' || e.target.id === 'mClose') $('modal').classList.remove('on'); }, SIG);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $('modal').classList.remove('on'); }, SIG);
 function monthsList() { const out = []; let d = new Date(2026, 5, 1); const end = dDate(ASOF); while (d <= end) { const a = Math.max(0, dayOf(d)), b = Math.min(ASOF, dayOf(new Date(d.getFullYear(), d.getMonth() + 1, 0))); out.push({ k: d.getFullYear() * 100 + d.getMonth(), l: MONTHS[d.getMonth()] + ' ' + d.getFullYear(), short: MONTHS[d.getMonth()].slice(0, 3), r: [a, b] }); d = new Date(d.getFullYear(), d.getMonth() + 1, 1); } return out; }
 
 /* ───────── TURNS ───────── */
@@ -950,19 +1157,20 @@ function invTurns() {
 
 /* ───────── REPORTS ───────── */
 function head(t, sub, right) { return '<div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2>' + t + '</h2>' + (sub ? '<p class="muted small" style="margin:0 0 8px">' + sub + '</p>' : '') + '</div><div class="row">' + (right || '') + '</div></div>'; }
-const RP = { slow: 90, prod: 'week', pvs: 'month', wire: 'month', move: 'week', month: null, item: '' };
+const RP = { xfer: 'month', xf: 'all', slow: 90, prod: 'week', pvs: 'month', wire: 'month', move: 'week', month: null, item: '' };
 
 function renderTop() { $('t-r-top').innerHTML = tmCard('rep', 'Top movers', false) + '<div id="topExtra"></div>'; renderTopExtra(); }
 function renderTopExtra() {
-  const st = TM.rep, r = PERIODS[st.per].r(), s = salesIn(r), u = st.m === 'kg' ? 'kg' : 'pcs';
-  const withStock = P.filter(p => p.unit === st.m && p.tot > 0 && p.c !== '(not in CURRENT STOCK)').map(p => ({ pp: p, p: p.p, v: measure(p, s[p.i]), stock: measure(p, p.tot) }));
+  const st = TM.rep, k = godK(), r = PERIODS[st.per].r(), s = sumTypeG(r[0], r[1], T['Sales'], k), u = st.m === 'kg' ? 'kg' : 'pcs';
+  ENT.top = { r, types: [T['Sales']], k, title: 'Sales' };
+  const withStock = P.filter(p => p.unit === st.m && gStock(p, k) > 0 && p.c !== '(not in CURRENT STOCK)').map(p => ({ pp: p, p: p.p, v: measure(p, s[p.i]), stock: measure(p, gStock(p, k)) }));
   const slowest = withStock.slice().sort((a, b) => a.v - b.v || b.stock - a.stock).slice(0, 20);
   const lowest = withStock.filter(x => x.v > 0).sort((a, b) => a.v - b.v).slice(0, 20);
   const zero = withStock.filter(x => x.v === 0).sort((a, b) => b.stock - a.stock);
-  const cols = [{ k: 'p', l: 'Item', f: r => pLink(r.pp) }, { k: 'v', l: 'Sold (' + u + ')', n: 1 }, { k: 'stock', l: 'Stock (' + u + ')', n: 1 }, { k: 'st', l: 'Status', f: r => stTag(statusOf(r.pp)) }];
-  $('topExtra').innerHTML = '<div class="card">' + head('Bottom of the list — same period and unit', rangeTxt(r) + ' · Sales only · items that have stock') +
-    '<div class="cols2"><div><h3>Slowest 20 with stock (incl. 0 sales)</h3>' + table('tSlow', cols, slowest, { maxH: 420 }) + '</div><div><h3>Lowest 20 sellers (sold at least 1)</h3>' + table('tLow', cols, lowest, { maxH: 420 }) + '</div></div>' +
-    '<h3>Zero sales in this period — most stock first (' + zero.length + ' items)</h3>' + table('tZero', cols, zero, { maxH: 380, limit: 200 }) + '</div>';
+  const cols = [{ k: 'p', l: 'Item', f: r => eLink(r.pp, 'top'), sv: r => r.p }, { k: 'v', l: 'Sold (' + u + ')', n: 1 }, { k: 'stock', l: (k < 0 ? 'Stock' : LOCS[k] + ' stock') + ' (' + u + ')', n: 1 }, { k: 'st', l: 'Status', f: r => stTag(statusOf(r.pp)), sv: r => ['neg', 'out', 'low', 'in', 'excess', 'nolevel'].indexOf(statusOf(r.pp)) }];
+  $('topExtra').innerHTML = '<div class="card">' + head('Bottom of the list — same period and unit', rangeTxt(r) + ' · Sales only' + (k < 0 ? '' : ' from ' + LOCS[k]) + ' · items that have stock' + (k < 0 ? '' : ' in ' + LOCS[k]) + '. Click an item to see its sales entries.') +
+    '<div class="cols2"><div><h3>Slowest 20 with stock (incl. 0 sales)</h3>' + table('tSlow', cols, slowest, { sort: 'v', dir: 1, maxH: 420, rerender: renderTopExtra }) + '</div><div><h3>Lowest 20 sellers (sold at least 1)</h3>' + table('tLow', cols, lowest, { sort: 'v', dir: 1, maxH: 420, rerender: renderTopExtra }) + '</div></div>' +
+    '<h3>Zero sales in this period (' + zero.length + ' items)</h3>' + table('tZero', cols, zero, { maxH: 380, limit: 200, rerender: renderTopExtra }) + '</div>';
 }
 
 function renderSlow() {
@@ -973,7 +1181,7 @@ function renderSlow() {
   $('t-r-slow').innerHTML = '<div class="card">' + head('Slow & dead stock', 'Items with stock' + (k < 0 ? '' : ' in ' + GOD) + ' and no sale' + (k < 0 ? '' : ' from ' + GOD) + ' in the chosen number of days. Never sold = no sale since ' + dStr(0) + '.', godSeg() + seg('slowD', [[30, '30 days'], [60, '60 days'], [90, '90 days']], days)) +
     '<div class="grid" style="margin-bottom:12px">' + tile('Items', rows.length, '', '') + tile('Never sold', rows.filter(r => r.ls < 0).length, '', '') + tile('Stock held (where weight is known)', fmt(kg), 'kg', '') + '</div>' +
     table('slow', [{ k: 'p', l: 'Item', f: r => pLink(r.pp) }, { k: 'c', l: 'Category', f: r => '<span class="small muted">' + esc(r.c) + '</span>' }, { k: 'tot', l: k < 0 ? 'Stock' : GOD + ' stock', n: 1 }, { k: 'u', l: 'Unit' }, { k: 'kg', l: 'Approx kg', n: 1 }, { k: 'ls', l: 'Last sale', f: r => r.ls < 0 ? '<span class="tag t-warn">Never sold</span>' : dStr(r.ls), sv: r => r.ls }, { k: 'since', l: 'Days since', n: 1 }],
-      rows, { sort: 'kg', maxH: 620, rerender: renderSlow }) + '</div>';
+      rows, { maxH: 620, rerender: renderSlow }) + '</div>';
 }
 SEGH.slowD = v => { RP.slow = v; renderSlow(); };
 
@@ -1000,6 +1208,8 @@ function locEndAt(d, k) {   // stock of every item in one godown at the end of d
 }
 /* Stock movement: one line per item that moved in the period; open a line to see every entry with the total stock after it */
 const MV = { per: 'year', from: '', to: '', q: '', cat: '', open: new Set() };
+const MVO = { o: 'cat' };   // order of the item lines: category (default, like Current stock) or A–Z
+SEGH.mvO = v => { MVO.o = v; drawMoveList(); document.querySelectorAll('[data-seg=mvO] button').forEach(b => b.classList.toggle('on', b.dataset.v === v)); };
 const MV_PER = { d7: ['7 days', () => [ASOF - 6, ASOF]], m1: ['1 month', () => [ASOF - 29, ASOF]], year: ['1 year', () => [ASOF - 364, ASOF]], custom: ['Custom', null] };
 function dmyDay(v) {
   const m = String(v || '').trim().match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/); if (!m) return null;
@@ -1012,21 +1222,88 @@ function moveRange() {
   return [Math.max(0, r[0]), Math.min(ASOF, r[1])];
 }
 const isXfer = m => /^transfer/i.test(D.types[m[4]] || '');
+/* ───────── TRANSFERS: pair each Transfer Out with its Transfer in ─────────
+   Column F (Godown) = the other side. WH / BB2 / BB1 ↔ each other: both rows should be there (checked from D.xferFrom on).
+   To / from a branch (Jain EKM, Calicut, Kannur, Office): one row only, nothing to pair. */
+const GODS = D.gods || LOCS.slice(), GODK = D.godk || LOCS.map(() => 'internal'), XDAY = D.xferDay == null ? 1e9 : D.xferDay;
+D.mv.forEach((m, j) => { if (m[6] == null) m[6] = -1; m[7] = j; });
+const gName = m => m[6] >= 0 ? GODS[m[6]] : '';
+const isBrX = m => isXfer(m) && m[6] >= 0 && GODK[m[6]] === 'branch';
+const isIntX = m => isXfer(m) && !isBrX(m);
+let TXC = null;
+const NM = 'not marked';
+function TX() {
+  if (TXC) return TXC;
+  const outs = [], ins = new Map(), recs = [], recOf = new Int32Array(D.mv.length).fill(-1), used = new Uint8Array(D.mv.length);
+  D.mv.forEach((m, j) => { if (!isXfer(m)) return; if (isBrX(m)) { recOf[j] = recs.length; recs.push({ d: m[0], i: m[1], from: m[5] ? LOCS[m[3]] : gName(m), to: m[5] ? gName(m) : LOCS[m[3]], qo: m[5] ? m[2] : null, qi: m[5] ? null : m[2], jo: m[5] ? j : -1, ji: m[5] ? -1 : j, st: m[5] ? 'brOut' : 'brIn', flag: 0 }); return; }
+    if (m[5]) outs.push(j); else { const k = m[1] + '|' + m[3]; if (!ins.has(k)) ins.set(k, []); ins.get(k).push(j); } });
+  const gLoc = m => m[6] >= 0 ? LOCS.indexOf(GODS[m[6]]) : -1;   // the other godown as an index in LOCS, -1 = not marked
+  const pick = (o, test, maxD) => {   // the closest unused Transfer in that fits
+    let best = -1, bd = 1e9;
+    const cand = [];
+    if (gLoc(o) >= 0) cand.push(...(ins.get(o[1] + '|' + gLoc(o)) || []));
+    else LOCS.forEach((l, k) => { if (k !== o[3]) cand.push(...(ins.get(o[1] + '|' + k) || [])); });
+    for (const j of cand) { if (used[j]) continue; const m = D.mv[j], dd = Math.abs(m[0] - o[0]); if (dd > maxD || !test(m)) continue; if (dd < bd) { bd = dd; best = j; } }
+    return best;
+  };
+  const mk = (jo, ji, st) => { const o = jo >= 0 ? D.mv[jo] : null, n = ji >= 0 ? D.mv[ji] : null, x = o || n;
+    const r = { d: o ? o[0] : n[0], i: x[1], from: o ? LOCS[o[3]] : (gName(n) || NM), to: n ? LOCS[n[3]] : (gName(o) || NM), qo: o ? o[2] : null, qi: n ? n[2] : null, jo, ji, st, flag: 0 };
+    if (o && n) { used[jo] = used[ji] = 1; recOf[jo] = recOf[ji] = recs.length; } else recOf[jo >= 0 ? jo : ji] = recs.length;
+    if (st !== 'ok' || (o && !gName(o)) || (n && !gName(n))) r.flag = r.d >= XDAY ? 1 : 0;
+    if (st === 'ok' && r.flag) r.st = 'nogd';
+    recs.push(r); };
+  const sameBack = (o, m) => m[6] < 0 || gLoc(m) === o[3];   // the Transfer in says it came from the OUT's godown (or says nothing)
+  // 1) same qty, up to 3 days apart · 2) different qty, same or next day (marked "qty differs")
+  outs.forEach(jo => { const o = D.mv[jo]; const ji = pick(o, m => m[2] === o[2] && sameBack(o, m) && (gLoc(o) >= 0 || m[0] === o[0]), 3); if (ji >= 0) mk(jo, ji, 'ok'); });
+  outs.forEach(jo => { if (used[jo]) return; const o = D.mv[jo]; if (gLoc(o) < 0) return; const ji = pick(o, m => gLoc(m) === o[3], 1); if (ji >= 0) mk(jo, ji, 'qty'); });
+  outs.forEach(jo => { if (!used[jo] && recOf[jo] < 0) mk(jo, -1, 'noIn'); });
+  ins.forEach(list => list.forEach(ji => { if (!used[ji] && recOf[ji] < 0) mk(-1, ji, 'noOut'); }));
+  TXC = { recs, recOf };
+  return TXC;
+}
+const XST = { ok: ['Matched', 't-ok'], qty: ['Qty differs', 't-warn'], noIn: ['Transfer in not entered', 't-bad'], noOut: ['Transfer Out not entered', 't-bad'], nogd: ['Godown not marked', 't-warn'], brOut: ['To branch', 't-info'], brIn: ['From branch', 't-info'] };
+function xLabel(x) {   // e.g. "Transfer BB1 → WH" / "Transfer to Jain EKM"
+  if (x.to === NM) return 'Transfer Out (to not marked)';
+  if (x.from === NM) return 'Transfer in (from not marked)';
+  return x.st === 'brOut' ? 'Transfer to ' + x.to : x.st === 'brIn' ? 'Transfer from ' + x.from : 'Transfer ' + x.from + ' → ' + x.to;
+}
+function xNote(x) {
+  if (x.st === 'noIn') return x.flag ? 'Transfer in at ' + x.to + ' not entered' : '';
+  if (x.st === 'noOut') return x.flag ? 'Transfer Out at ' + x.from + ' not entered' : '';
+  if (x.st === 'qty') return 'out ' + fmt(x.qo) + ' / in ' + fmt(x.qi);
+  if (x.st === 'nogd') return 'Godown column empty';
+  if (x.st === 'ok' && x.jo >= 0 && x.ji >= 0 && D.mv[x.jo][0] !== D.mv[x.ji][0]) return 'in entered on ' + dStr(D.mv[x.ji][0]);
+  return '';
+}
 function moveItems(r) {
   const agg = new Map();
   const k = godK();
   each(r[0], r[1], m => { if (k >= 0 && m[3] !== k) return; const o = agg.get(m[1]) || { i: m[1], n: 0 }; o.n++; agg.set(m[1], o); });
   return [...agg.values()].map(o => Object.assign(o, { pp: P[o.i] }));
 }
-function moveLedger(i, r) {   // oldest first; all godowns: running total (a transfer leaves it unchanged); one godown: that godown's stock
-  const k = godK(), out = [];
+// oldest first. All godowns: total stock; a transfer between WH / BB2 / BB1 is ONE line (BB1/WH, out and in) and leaves the
+// total as it is when both sides are there. One godown: that godown's stock, the transfer shows where it went to / came from.
+function moveLedger(i, r) {
+  const k = godK(), out = [], X = TX();
   let bal = k < 0 ? r2(r[0] > 0 ? HIST.end[r[0] - 1][i] : 0) : 0;
   if (k >= 0) { for (let d = 0; d < r[0] && d < BYDAY.length; d++) for (const m of BYDAY[d]) if (m[1] === i && m[3] === k) bal += m[5] ? -m[2] : m[2]; bal = r3(bal); }
-  const open = bal;
+  const open = bal, done = new Set();
+  const inR = j => j >= 0 && D.mv[j][0] >= r[0] && D.mv[j][0] <= r[1];
   for (let d = r[0]; d <= r[1]; d++) for (const m of BYDAY[d]) {
     if (m[1] !== i || (k >= 0 && m[3] !== k)) continue;
-    if (k >= 0 || !isXfer(m)) bal = r3(bal + (m[5] ? -m[2] : m[2]));
-    out.push({ d, type: D.types[m[4]] || '(blank)', loc: LOCS[m[3]], inQ: m[5] ? null : m[2], outQ: m[5] ? m[2] : null, bal });
+    const x = isXfer(m) && X.recOf[m[7]] >= 0 ? X.recs[X.recOf[m[7]]] : null;
+    if (x && k < 0 && x.jo >= 0 && x.ji >= 0 && inR(x.jo) && inR(x.ji)) {   // both sides: one line
+      if (done.has(x)) continue; done.add(x);
+      bal = r3(bal + x.qi - x.qo);
+      out.push({ d, type: xLabel(x), loc: x.from + '/' + x.to, inQ: x.qi, outQ: x.qo, bal, note: xNote(x), st: x.st, flag: x.flag || x.st === 'qty' });
+      continue;
+    }
+    bal = r3(bal + (m[5] ? -m[2] : m[2]));
+    const both = x && x.jo >= 0 && x.ji >= 0, known = x && x.from !== NM && x.to !== NM;
+    const type = x ? (k >= 0 && known && x.st !== 'brOut' && x.st !== 'brIn' ? (m[5] ? 'Transfer to ' + x.to : 'Transfer from ' + x.from) : xLabel(x)) : D.types[m[4]] || '(blank)';
+    const other = both ? D.mv[m[5] ? x.ji : x.jo][0] : null;
+    const note = x ? (both ? (other !== d ? (m[5] ? 'in on ' : 'out on ') + dStr(other) : (x.st === 'qty' ? xNote(x) : '')) : xNote(x)) : '';
+    out.push({ d, type, loc: x && known && x.st !== 'brOut' && x.st !== 'brIn' ? x.from + '/' + x.to : LOCS[m[3]], inQ: m[5] ? null : m[2], outQ: m[5] ? m[2] : null, bal, note, st: x ? x.st : '', flag: x ? x.flag : 0 });
   }
   return { open, rows: out, close: bal };
 }
@@ -1034,9 +1311,9 @@ function ledgerHtml(i, r) {
   const p = P[i], u = unitLabel(p), L = moveLedger(i, r), n = v => v == null ? '' : fmt(v), g = GOD === 'all' ? '' : ' (' + GOD + ')';
   return '<div class="tw" style="max-height:420px;overflow:auto"><table><thead><tr><th>Date</th><th>Type</th><th>Godown</th><th class="n">In</th><th class="n">Out</th><th class="n">' + (g ? GOD + ' stock' : 'Total stock') + '</th></tr></thead><tbody>' +
     '<tr class="ob"><td>' + dStr(r[0]) + '</td><td colspan="4">Opening stock' + g + '</td><td class="n' + (L.open < 0 ? ' neg' : '') + '">' + fmt(L.open) + '</td></tr>' +
-    L.rows.map(x => '<tr><td>' + dStr(x.d) + '</td><td>' + esc(x.type) + '</td><td>' + x.loc + '</td><td class="n">' + n(x.inQ) + '</td><td class="n">' + n(x.outQ) + '</td><td class="n' + (x.bal < 0 ? ' neg' : '') + '"><b>' + fmt(x.bal) + '</b></td></tr>').join('') +
+    L.rows.map(x => '<tr><td>' + dStr(x.d) + '</td><td>' + esc(x.type) + (x.note ? ' <span class="tag ' + (x.flag ? (XST[x.st] || XST.qty)[1] : 't-info') + '">' + esc(x.note) + '</span>' : '') + '</td><td>' + esc(x.loc) + '</td><td class="n">' + n(x.inQ) + '</td><td class="n">' + n(x.outQ) + '</td><td class="n' + (x.bal < 0 ? ' neg' : '') + '"><b>' + fmt(x.bal) + '</b></td></tr>').join('') +
     '<tr class="cb"><td>' + dStr(r[1]) + '</td><td colspan="4">Closing stock' + g + ' (' + u + ')</td><td class="n' + (L.close < 0 ? ' neg' : '') + '">' + fmt(L.close) + '</td></tr></tbody></table></div>' +
-    '<p class="small muted" style="margin:6px 0 0">' + (g ? GOD + ' stock = stock in ' + GOD + ' after that entry; transfers in and out of ' + GOD + ' count.' : 'Total stock = all godowns together after that entry. A transfer moves stock between godowns, so the total stays the same.') + '</p>';
+    '<p class="small muted" style="margin:6px 0 0">' + (g ? GOD + ' stock = stock in ' + GOD + ' after that entry; transfers in and out of ' + GOD + ' count.' : 'Total stock = all godowns together after that entry. A transfer between WH, BB2 and BB1 is one line (from/to, out and in) and leaves the total as it is when both sides are entered; a transfer to another branch lowers it. So the total stays the same.') + '</p>';
 }
 function renderMove() {
   const r = moveRange();
@@ -1045,7 +1322,7 @@ function renderMove() {
       godSeg() + seg('moveP', Object.entries(MV_PER).map(([k, v]) => [k, v[0]]), MV.per) + (r ? csvBtn('move', 'Stock movement') : '')) +
     (cust ? '<div class="row filters">' + cust + '</div>' : '') +
     (r ? '<div class="row filters"><input id="mvQ" placeholder="Search item" value="' + esc(MV.q) + '" style="min-width:200px;flex:1"><select id="mvCat"><option value="">All categories</option>' +
-      CATS.map(c => '<option' + (c === MV.cat ? ' selected' : '') + '>' + esc(c) + '</option>').join('') + '</select><span class="muted small" id="mvCount"></span></div><div id="mvList"></div>' : '') + '</div>';
+      CATS.map(c => '<option' + (c === MV.cat ? ' selected' : '') + '>' + esc(c) + '</option>').join('') + '</select>' + seg('mvO', [['cat', 'Category order'], ['az', 'A–Z']], MVO.o) + '<span class="muted small" id="mvCount"></span></div><div id="mvList"></div>' : '') + '</div>';
   if (cust) {
     ['mvFrom', 'mvTo'].forEach(id => { const el = $(id); el.addEventListener('input', () => { let v = el.value.replace(/\D/g, '').slice(0, 8), o = v.slice(0, 2); if (v.length > 2) o += '-' + v.slice(2, 4); if (v.length > 4) o += '-' + v.slice(4); el.value = o; });
       el.addEventListener('keydown', e => { if (e.key === 'Enter') $('mvGo').click(); }); });
@@ -1058,7 +1335,7 @@ function renderMove() {
 }
 function drawMoveList() {
   const r = moveRange(), q = MV.q.trim().toLowerCase();
-  const items = moveItems(r).filter(o => (!q || o.pp.p.toLowerCase().includes(q)) && (!MV.cat || o.pp.c === MV.cat)).sort((a, b) => a.pp.p.localeCompare(b.pp.p));
+  const items = moveItems(r).filter(o => (!q || o.pp.p.toLowerCase().includes(q)) && (!MV.cat || o.pp.c === MV.cat)).sort((a, b) => MVO.o === 'az' ? a.pp.p.localeCompare(b.pp.p) : catKey(a.pp) - catKey(b.pp));
   const lim = 800;
   $('mvList').innerHTML = items.length ? '<div class="mvlist">' + items.slice(0, lim).map(o => {
     const op = MV.open.has(o.i);
@@ -1069,16 +1346,48 @@ function drawMoveList() {
   $('mvCount').textContent = items.length + ' item' + (items.length === 1 ? '' : 's');
   // every entry of the period, for "Download for Excel"
   const all = [];
-  items.forEach(o => moveLedger(o.i, r).rows.forEach(x => all.push({ d: dStr(x.d), p: o.pp.p, c: o.pp.c, type: x.type, loc: x.loc, inQ: x.inQ, outQ: x.outQ, bal: x.bal, u: unitLabel(o.pp) })));
-  TABLES.move = { cols: [{ k: 'd', l: 'Date' }, { k: 'p', l: 'Item' }, { k: 'c', l: 'Category' }, { k: 'type', l: 'Type' }, { k: 'loc', l: 'Godown' }, { k: 'inQ', l: 'In' }, { k: 'outQ', l: 'Out' }, { k: 'bal', l: (GOD === 'all' ? 'Total' : GOD) + ' stock after' }, { k: 'u', l: 'Unit' }], rows: all };
+  items.forEach(o => moveLedger(o.i, r).rows.forEach(x => all.push({ d: dStr(x.d), p: o.pp.p, c: o.pp.c, type: x.type, loc: x.loc, inQ: x.inQ, outQ: x.outQ, bal: x.bal, u: unitLabel(o.pp), note: x.note || '' })));
+  TABLES.move = { cols: [{ k: 'd', l: 'Date' }, { k: 'p', l: 'Item' }, { k: 'c', l: 'Category' }, { k: 'type', l: 'Type' }, { k: 'loc', l: 'Godown' }, { k: 'inQ', l: 'In' }, { k: 'outQ', l: 'Out' }, { k: 'bal', l: (GOD === 'all' ? 'Total' : GOD) + ' stock after' }, { k: 'u', l: 'Unit' }, { k: 'note', l: 'Note' }], rows: all };
 }
 document.addEventListener('toggle', e => {
   const d = e.target; if (!d.matches || !d.matches('details.mv')) return;
   const i = +d.dataset.mv, r = moveRange(); if (!r) return;
   if (d.open) { MV.open.add(i); const b = d.querySelector('.mvbody'); if (!b.innerHTML) b.innerHTML = ledgerHtml(i, r); }
   else MV.open.delete(i);
-}, true);
+}, { capture: true, signal: AC.signal });
 SEGH.moveP = v => { if (v === 'custom' && !MV.from) { MV.from = dStr(Math.max(0, ASOF - 29)); MV.to = dStr(ASOF); } MV.per = v; MV.open.clear(); renderMove(); };
+
+/* ───────── TRANSFERS report ───────── */
+function renderXfer() {
+  const k = godK(), r = PERIODS[RP.xfer].r(), f = RP.xf, X = TX();
+  ENT.xfer = { r, types: [T['Transfer Out'], T['Transfer in']], k, title: 'Transfers' };
+  const touches = x => k < 0 || x.from === LOCS[k] || x.to === LOCS[k];
+  const inPer = X.recs.filter(x => x.d >= r[0] && x.d <= r[1] && touches(x));
+  const isInt = x => x.st !== 'brOut' && x.st !== 'brIn';
+  const prob = x => x.flag || x.st === 'qty';
+  const shown = inPer.filter(x => f === 'all' || (f === 'prob' && prob(x)) || (f === 'int' && isInt(x)) || (f === 'br' && !isInt(x)));
+  const rows = shown.map(x => { const p = P[x.i]; return { pp: p, p: p.p, c: p.c, d: x.d, from: x.from, to: x.to, qo: x.qo, qi: x.qi, st: x.flag || !isInt(x) || x.st !== 'noIn' && x.st !== 'noOut' ? x.st : 'old', note: xNote(x), u: unitLabel(p), x }; });
+  const ints = inPer.filter(isInt), bad = inPer.filter(prob), brO = inPer.filter(x => x.st === 'brOut'), brI = inPer.filter(x => x.st === 'brIn');
+  const kgOf = list => list.reduce((t, x) => t + (P[x.i].kgPer ? (x.qo != null ? x.qo : x.qi) * P[x.i].kgPer : 0), 0);
+  // routes: from → to, with pieces and kg
+  const rt = new Map();
+  inPer.forEach(x => { const key = x.from + ' → ' + x.to; const o = rt.get(key) || { route: key, n: 0, pcs: 0, kg: 0, bad: 0 }; const p = P[x.i], q = x.qo != null ? x.qo : x.qi; o.n++; if (p.unit === 'pcs') o.pcs += q; if (p.kgPer) o.kg += q * p.kgPer; if (prob(x)) o.bad++; rt.set(key, o); });
+  const xTag = r => { const s = r.st === 'old' ? ['Only one side (before ' + D.xferFrom + ')', 't-info'] : XST[r.st] || ['', '']; return '<span class="tag ' + s[1] + '">' + s[0] + '</span>'; };
+  $('t-r-xfer').innerHTML = '<div class="card">' + head('Transfers' + (k < 0 ? '' : ' · ' + GOD), rangeTxt(r) + (k < 0 ? '' : ' · transfers in and out of ' + GOD) + '. Between WH, BB2 and BB1 each Transfer Out is matched with its Transfer in (same item and quantity, the Godown column tells where it went). From ' + D.xferFrom + ' a missing side is marked. To / from other branches has one side only. Click an item for its transfer entries.',
+      godSeg() + perSeg('xferP', RP.xfer, ['week', 'month', 'lmonth', 'd30', 'all', 'custom']) + csvBtn('xfer', 'Transfers')) +
+    custBar(RP.xfer) +
+    '<div class="grid" style="margin-bottom:12px">' + tile('Between godowns', ints.length, 'transfers', ints.filter(x => x.st === 'ok').length + ' matched') +
+      tile('Not matched', '<span class="' + (bad.length ? 'neg' : '') + '">' + bad.length + '</span>', '', 'from ' + D.xferFrom) +
+      tile('To other branches', brO.length, 'rows', fmt(kgOf(brO)) + ' kg approx') + tile('From other branches', brI.length, 'rows', fmt(kgOf(brI)) + ' kg approx') + '</div>' +
+    '<div class="row filters">' + seg('xferF', [['all', 'All'], ['prob', 'Not matched'], ['int', 'Between godowns'], ['br', 'Other branches']], f) + '<span class="muted small">' + rows.length + ' transfers</span></div>' +
+    table('xfer', [{ k: 'd', l: 'Date', f: r => dStr(r.d) }, { k: 'p', l: 'Item', f: r => eLink(r.pp, 'xfer'), sv: r => r.p }, { k: 'c', l: 'Category', f: r => '<span class="small muted">' + esc(r.c) + '</span>' },
+      { k: 'from', l: 'From' }, { k: 'to', l: 'To' }, { k: 'qo', l: 'Out', n: 1 }, { k: 'qi', l: 'In', n: 1 }, { k: 'st', l: 'Status', f: r => xTag(r) + (r.note && r.st !== 'noIn' && r.st !== 'noOut' ? ' <span class="small muted">' + esc(r.note) + '</span>' : ''), sv: r => ['noIn', 'noOut', 'qty', 'nogd', 'old', 'ok', 'brOut', 'brIn'].indexOf(r.st), x: r => (xTag(r).replace(/<[^>]+>/g, '') + (r.note ? ' · ' + r.note : '')) }, { k: 'u', l: 'Unit' }],
+      rows, { maxH: 620, limit: 1500, rerender: renderXfer }) + '</div>' +
+    '<div class="card">' + head('By route', 'Same period. Pieces and kg (approx, where the weight is known) are kept apart.') +
+    table('xferR', [{ k: 'route', l: 'From → To' }, { k: 'n', l: 'Transfers', n: 1 }, { k: 'pcs', l: 'Pieces', n: 1 }, { k: 'kg', l: 'Approx kg', n: 1 }, { k: 'bad', l: 'Not matched', n: 1, f: r => r.bad ? '<b class="neg">' + r.bad + '</b>' : '0' }], [...rt.values()].map(o => Object.assign(o, { pcs: r2(o.pcs), kg: Math.round(o.kg) })), { sort: 'n', maxH: 420, rerender: renderXfer }) + '</div>';
+}
+SEGH.xferP = v => { RP.xfer = v; renderXfer(); };
+SEGH.xferF = v => { RP.xf = v; renderXfer(); };
 
 /* ───────── NEGATIVE STOCK: when each item / godown went below zero, by which entries, and whether it came back ───────── */
 let NEGH = null;
@@ -1111,23 +1420,23 @@ function renderNeg() {
   const H = negHist(), k = godK(), sinceSv = r => r.since === '—' ? '' : r.since.split('-').reverse().join('');
   const resAll = H.eps.filter(e => e.to != null && (k < 0 || e.sc === k));
   const res = resAll.map(e => ({ pp: P[e.i], p: P[e.i].p, w: SCOPE_L(e.sc, e), from: dStr(e.from), fk: e.from, to: dStr(e.to), tk: e.to, days: e.to - e.from, min: e.min }));
-  const resTbl = '<h3>Went negative and came back' + (k < 0 ? '' : ' — ' + GOD) + '</h3>' + table('negR', [{ k: 'p', l: 'Item', f: r => nLink(r.pp) }, { k: 'w', l: 'Where' }, { k: 'from', l: 'Negative from', sv: r => r.fk }, { k: 'to', l: 'Back to zero or more', sv: r => r.tk }, { k: 'days', l: 'Days', n: 1 }, { k: 'min', l: 'Lowest', n: 1, neg: 1 }], res, { sort: 'to', dir: -1, maxH: 520, rerender: renderNeg });
+  const resTbl = '<h3>Went negative and came back' + (k < 0 ? '' : ' — ' + GOD) + '</h3>' + table('negR', [{ k: 'p', l: 'Item', f: r => nLink(r.pp) }, { k: 'w', l: 'Where' }, { k: 'from', l: 'Negative from', sv: r => r.fk }, { k: 'to', l: 'Back to zero or more', sv: r => r.tk }, { k: 'days', l: 'Days', n: 1 }, { k: 'min', l: 'Lowest', n: 1, neg: 1 }], res, { maxH: 520, rerender: renderNeg });
   let body;
   if (k < 0) {
     const tot = P.filter(p => p.tot < 0).map(p => Object.assign({}, p, { pp: p, since: sinceOf(p.i, 'T') }));
     const gd = []; P.forEach(p => LOCS.forEach((l, kk) => { if (p[l] < 0 && p.tot >= 0) gd.push({ pp: p, p: p.p, l, v: p[l], tot: p.tot, since: sinceOf(p.i, kk) }); }));
     body = '<div class="grid" style="margin-bottom:12px">' + tile('Total below zero', tot.length, 'items', '') + tile('One godown below zero (total OK)', gd.length, 'cells', '') + tile('Went negative and came back', res.length, 'times', 'all data') + '</div>' +
-      '<div class="cols2"><div><h3>Total below zero</h3>' + table('negT', [{ k: 'p', l: 'Item', f: r => nLink(r.pp) }, ...LOCS.map(l => ({ k: l, l, n: 1, neg: 1 })), { k: 'tot', l: 'Total', n: 1, neg: 1 }, { k: 'since', l: 'Negative since', sv: sinceSv }], tot, { sort: 'tot', dir: 1, maxH: 520, rerender: renderNeg }) + '</div>' +
-      '<div><h3>One godown below zero</h3>' + table('negG', [{ k: 'p', l: 'Item', f: r => nLink(r.pp) }, { k: 'l', l: 'Godown' }, { k: 'v', l: 'Godown stock', n: 1, neg: 1 }, { k: 'tot', l: 'Total', n: 1 }, { k: 'since', l: 'Negative since', sv: sinceSv }], gd, { sort: 'v', dir: 1, maxH: 520, rerender: renderNeg }) + '</div></div>';
+      '<div class="cols2"><div><h3>Total below zero</h3>' + table('negT', [{ k: 'p', l: 'Item', f: r => nLink(r.pp) }, ...LOCS.map(l => ({ k: l, l, n: 1, neg: 1 })), { k: 'tot', l: 'Total', n: 1, neg: 1 }, { k: 'since', l: 'Negative since', sv: sinceSv }], tot, { maxH: 520, rerender: renderNeg }) + '</div>' +
+      '<div><h3>One godown below zero</h3>' + table('negG', [{ k: 'p', l: 'Item', f: r => nLink(r.pp) }, { k: 'l', l: 'Godown' }, { k: 'v', l: 'Godown stock', n: 1, neg: 1 }, { k: 'tot', l: 'Total', n: 1 }, { k: 'since', l: 'Negative since', sv: sinceSv }], gd, { maxH: 520, rerender: renderNeg }) + '</div></div>';
   } else {
     const rows = P.filter(p => p[GOD] < 0).map(p => ({ pp: p, p: p.p, v: p[GOD], tot: p.tot, since: sinceOf(p.i, k) }));
     body = '<div class="grid" style="margin-bottom:12px">' + tile(GOD + ' below zero', rows.length, 'items', '') + tile('of which total is OK', rows.filter(r => r.tot >= 0).length, 'items', 'wrong godown or missing transfer?') + tile('Went negative and came back', res.length, 'times', GOD + ', all data') + '</div>' +
-      '<h3>' + GOD + ' below zero</h3>' + table('negW', [{ k: 'p', l: 'Item', f: r => nLink(r.pp) }, { k: 'v', l: GOD + ' stock', n: 1, neg: 1 }, { k: 'tot', l: 'Total (all godowns)', n: 1, neg: 1 }, { k: 'since', l: 'Negative since', sv: sinceSv }], rows, { sort: 'v', dir: 1, maxH: 520, rerender: renderNeg });
+      '<h3>' + GOD + ' below zero</h3>' + table('negW', [{ k: 'p', l: 'Item', f: r => nLink(r.pp) }, { k: 'v', l: GOD + ' stock', n: 1, neg: 1 }, { k: 'tot', l: 'Total (all godowns)', n: 1, neg: 1 }, { k: 'since', l: 'Negative since', sv: sinceSv }], rows, { maxH: 520, rerender: renderNeg });
   }
   $('t-r-neg').innerHTML = '<div class="card">' + head('Negative stock', 'Kept out of the dashboard on purpose. Click an item to see how it went below zero, which entries did it, and whether it came back. "Total below zero" means an IN entry is missing or an OUT is too big; one negative godown with a positive total is usually a wrong godown or a missing transfer.', godSeg()) +
     body + resTbl + '<p class="small muted">Stock is checked at the end of each day, so an OUT and an IN on the same day do not count as negative.</p></div>';
 }
-function dayEntries(i, d, sc) { return BYDAY[d].filter(m => m[1] === i && (sc === 'T' ? !isXfer(m) : m[3] === sc)); }
+function dayEntries(i, d, sc) { return BYDAY[d].filter(m => m[1] === i && (sc === 'T' ? !isIntX(m) : m[3] === sc)); }
 function entTxt(m) { return esc(D.types[m[4]] || '(blank)') + ' ' + (m[5] ? '−' : '+') + fmt(m[2]) + ' ' + LOCS[m[3]]; }
 function negHints(p, e) {
   const out = [], u = unitLabel(p), outs = dayEntries(p.i, e.from, e.sc).filter(m => m[5]);
@@ -1154,7 +1463,7 @@ function negLedger(p, e) {   // entries for that godown (or total) from a little
   const end = e.to != null ? Math.min(ASOF, e.to) : ASOF;
   for (let d = 0; d <= end; d++) for (const m of BYDAY[d]) {
     if (m[1] !== p.i || (sc !== 'T' && m[3] !== sc)) continue;
-    if (sc === 'T' && isXfer(m)) { list.push({ d, m, bal: r3(bal), x: 1 }); continue; }
+    if (sc === 'T' && isIntX(m)) { list.push({ d, m, bal: r3(bal), x: 1 }); continue; }
     bal += m[5] ? -m[2] : m[2]; list.push({ d, m, bal: r3(bal) });
   }
   let first = list.findIndex(x => x.d >= e.from); if (first < 0) first = list.length;
@@ -1184,7 +1493,18 @@ function negCard(p) {
   });
   $('modalCard').innerHTML = h; $('modal').classList.add('on');
 }
-document.addEventListener('click', e => { const a = e.target.closest('[data-neg]'); if (a && ROLE !== 'user') { e.preventDefault(); negCard(P[+a.dataset.neg]); } });
+document.addEventListener('click', e => { const a = e.target.closest('[data-ent]'); if (!a || ROLE === 'user') return; e.preventDefault(); const [key, i] = a.dataset.ent.split('|'); if (ENT[key]) entCard(P[+i], ENT[key]); }, SIG);
+function entCard(p, o) {
+  const u = unitLabel(p), list = [], tot = {};
+  each(o.r[0], o.r[1], m => { if (m[1] === p.i && o.types.includes(m[4]) && (o.k < 0 || m[3] === o.k)) { list.push(m); const t = D.types[m[4]]; tot[t] = (tot[t] || 0) + m[2]; } });
+  let h = '<div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2 style="font-size:18px">' + esc(p.p) + '</h2><div class="muted small">' + esc(o.title) + ' · ' + rangeTxt(o.r) + (o.k < 0 ? '' : ' · ' + LOCS[o.k] + ' only') + ' · ' + esc(p.c) + ' · ' + u + '</div></div><button class="x" id="mClose" aria-label="Close">✕</button></div>';
+  h += '<div class="grid" style="margin-top:12px">' + Object.entries(tot).map(([t, q]) => tile(t, fmt(r3(q)), u, '')).join('') + tile('Entries', list.length, '', '') + '</div>';
+  h += list.length ? '<div class="tw" style="max-height:440px;overflow:auto;margin-top:10px"><table><thead><tr><th>Date</th><th>Type</th><th>Godown</th><th class="n">In</th><th class="n">Out</th></tr></thead><tbody>' +
+    list.slice(-500).reverse().map(m => '<tr><td>' + dStr(m[0]) + '</td><td>' + esc(D.types[m[4]] || '(blank)') + '</td><td>' + LOCS[m[3]] + '</td><td class="n">' + (m[5] ? '' : fmt(m[2])) + '</td><td class="n">' + (m[5] ? fmt(m[2]) : '') + '</td></tr>').join('') +
+    '</tbody></table></div>' + (list.length > 500 ? '<p class="small muted">Showing the latest 500 of ' + list.length + '.</p>' : '') : '<p class="muted">No entries.</p>';
+  $('modalCard').innerHTML = h; $('modal').classList.add('on');
+}
+document.addEventListener('click', e => { const a = e.target.closest('[data-neg]'); if (a && ROLE !== 'user') { e.preventDefault(); negCard(P[+a.dataset.neg]); } }, SIG);
 
 function renderMonth() {
   const ms = monthsList(); if (RP.month == null) RP.month = ms.length - 1;
@@ -1203,37 +1523,43 @@ function renderMonth() {
 }
 
 function renderProdR() {
-  const r = PERIODS[RP.prod].r(), len = r[1] - r[0] + 1, pr = [r[0] - len, r[0] - 1];
-  const cur = prodSum(r), prev = prodSum(pr);
+  const k = godK(), r = PERIODS[RP.prod].r(), len = r[1] - r[0] + 1, pr = [r[0] - len, r[0] - 1];
+  const cur = prodSum(r, 0, k), prev = prodSum(pr, 0, k);
+  ENT.prod = { r, types: [T['Production']], k, title: 'Production' };
   const by = new Map(), loc = { pcs: [0, 0, 0], kg: [0, 0, 0] };
-  each(r[0], r[1], m => { if (m[4] !== T['Production']) return; const p = P[m[1]]; const o = by.get(p.i) || { pp: p, p: p.p, c: p.c, u: unitLabel(p), q: 0, kg: 0, WH: 0, BB1: 0, BB2: 0 }; o.q += m[2]; o[LOCS[m[3]]] += m[2]; o.kg += p.kgPer ? m[2] * p.kgPer : 0; by.set(p.i, o); loc[p.unit][m[3]] += measure(p, m[2]); });
+  each(r[0], r[1], m => { if (m[4] !== T['Production'] || (k >= 0 && m[3] !== k)) return; const p = P[m[1]]; const o = by.get(p.i) || { pp: p, p: p.p, c: p.c, u: unitLabel(p), q: 0, kg: 0, WH: 0, BB1: 0, BB2: 0 }; o.q += m[2]; o[LOCS[m[3]]] += m[2]; o.kg += p.kgPer ? m[2] * p.kgPer : 0; by.set(p.i, o); loc[p.unit][m[3]] += measure(p, m[2]); });
   const rows = [...by.values()].map(o => Object.assign(o, { kg: o.kg || null }));
-  $('t-r-prod').innerHTML = '<div class="card">' + head('Production report', rangeTxt(r) + ' · compared with the previous ' + len + ' day' + (len > 1 ? 's' : '') + ' (' + rangeTxt(pr) + ')', perSeg('prodP', RP.prod, ['today', 'yday', 'week', 'month', 'lmonth', 'd30']) + csvBtn('prod', 'Production report')) +
+  const gcols = k < 0 ? LOCS : [LOCS[k]];
+  $('t-r-prod').innerHTML = '<div class="card">' + head('Production report' + (k < 0 ? '' : ' · ' + GOD), rangeTxt(r) + (k < 0 ? '' : ' · ' + GOD + ' only') + ' · compared with the previous ' + len + ' day' + (len > 1 ? 's' : '') + ' (' + rangeTxt(pr) + '). Click an item to see its production entries.', godSeg() + perSeg('prodP', RP.prod, ['today', 'yday', 'week', 'month', 'lmonth', 'd30', 'custom']) + csvBtn('prod', 'Production report' + (k < 0 ? '' : ' ' + GOD))) +
+    custBar(RP.prod) +
     '<div class="grid">' + tile('Piece items made', fmt(cur.pcs), 'pcs', 'vs previous ' + cmp(cur.pcs, prev.pcs)) + tile('Kg items made', fmt(cur.kg), 'kg', 'vs previous ' + cmp(cur.kg, prev.kg)) +
-    LOCS.map(l => tile(l, fmt(loc.pcs[LOCS.indexOf(l)]), 'pcs', fmt(loc.kg[LOCS.indexOf(l)]) + ' kg items')).join('') + '</div>' +
+    (k < 0 ? LOCS.map(l => tile(l, fmt(loc.pcs[LOCS.indexOf(l)]), 'pcs', fmt(loc.kg[LOCS.indexOf(l)]) + ' kg items')).join('') : '') + '</div>' +
     '<h3>Per day</h3>' + seg('prodU', [['pcs', 'Pieces'], ['kg', 'Kg items']], RP.prodU || 'pcs') + '<div id="prodChart" style="margin-top:8px"></div>' +
-    '<h3>Items produced</h3>' + table('prod', [{ k: 'p', l: 'Item', f: r => pLink(r.pp) }, { k: 'c', l: 'Category', f: r => '<span class="small muted">' + esc(r.c) + '</span>' }, { k: 'u', l: 'Unit' }, { k: 'WH', l: 'WH', n: 1 }, { k: 'BB2', l: 'BB2', n: 1 }, { k: 'BB1', l: 'BB1', n: 1 }, { k: 'q', l: 'Total', n: 1, f: r => '<b>' + fmt(r.q) + '</b>' }, { k: 'kg', l: 'Approx kg', n: 1 }], rows, { sort: 'q', maxH: 560, rerender: renderProdR }) + '</div>';
+    '<h3>Items produced</h3>' + table('prod', [{ k: 'p', l: 'Item', f: r => eLink(r.pp, 'prod'), sv: r => r.p }, { k: 'c', l: 'Category', f: r => '<span class="small muted">' + esc(r.c) + '</span>' }, { k: 'u', l: 'Unit' }, ...gcols.map(l => ({ k: l, l, n: 1 })), { k: 'q', l: 'Total', n: 1, f: r => '<b>' + fmt(r.q) + '</b>' }, { k: 'kg', l: 'Approx kg', n: 1 }], rows, { maxH: 560, rerender: renderProdR }) + '</div>';
   const u = RP.prodU || 'pcs', a = Math.max(0, r[1] - Math.max(len, 14) + 1), lab = [], ser = LOCS.map(() => []);
   for (let d = a; d <= r[1]; d++) { lab.push(dShort(d)); const v = [0, 0, 0]; for (const m of BYDAY[d]) if (m[4] === T['Production'] && P[m[1]].unit === u) v[m[3]] += measure(P[m[1]], m[2]); v.forEach((x, k) => ser[k].push(r2(x))); }
-  colChart($('prodChart'), lab, LOCS.map((l, k) => ({ n: l, c: 'var(--s' + (k + 1) + ')', v: ser[k] })).filter(s => s.v.some(Boolean)), { unit: u, tipLabel: i => dStr(a + i), h: 220, legend: 1 });
+  colChart($('prodChart'), lab, LOCS.map((l, j) => ({ n: l, c: 'var(--s' + (j + 1) + ')', v: ser[j] })).filter((s, j) => (k < 0 || j === k) && s.v.some(Boolean)), { unit: u, tipLabel: i => dStr(a + i), h: 220, legend: 1 });
 }
 SEGH.prodP = v => { RP.prod = v; renderProdR(); };
 SEGH.prodU = v => { RP.prodU = v; renderProdR(); };
 
 function renderPvs() {
-  const r = PERIODS[RP.pvs].r(), len = r[1] - r[0] + 1, pr = sumType(r[0], r[1], T['Production']), sl = sumType(r[0], r[1], T['Sales']);
-  const rows = P.filter(p => pr[p.i] > 0).map(p => { const dl = daysLeft(p); return { pp: p, p: p.p, u: unitLabel(p), made: pr[p.i], sold: sl[p.i], net: r2(pr[p.i] - sl[p.i]), tot: p.tot, days: dl, flag: sl[p.i] > pr[p.i] * 1.1 ? 'sell' : (pr[p.i] > sl[p.i] * 2 && p.tot > 0 && dl != null && dl > 60 ? 'pile' : '') }; });
+  const k = godK(), r = PERIODS[RP.pvs].r(), len = r[1] - r[0] + 1, pr = sumTypeG(r[0], r[1], T['Production'], k), sl = sumTypeG(r[0], r[1], T['Sales'], k);
+  ENT.pvs = { r, types: [T['Production'], T['Sales']], k, title: 'Production and sales' };
+  const rows = P.filter(p => pr[p.i] > 0).map(p => { const dl = daysLeft(p); return { pp: p, p: p.p, c: p.c, u: unitLabel(p), made: pr[p.i], sold: sl[p.i], net: r2(pr[p.i] - sl[p.i]), tot: gStock(p, k), days: dl, flag: sl[p.i] > pr[p.i] * 1.1 ? 'sell' : (pr[p.i] > sl[p.i] * 2 && p.tot > 0 && dl != null && dl > 60 ? 'pile' : '') }; });
   const sell = rows.filter(x => x.flag === 'sell').length, pile = rows.filter(x => x.flag === 'pile').length;
-  $('t-r-pvs').innerHTML = '<div class="card">' + head('Production vs sales', rangeTxt(r) + ' · items made in this period, against what was sold. Helps decide what to make next.', perSeg('pvsP', RP.pvs, ['week', 'month', 'lmonth', 'd30', 'all'])) +
+  $('t-r-pvs').innerHTML = '<div class="card">' + head('Production vs sales' + (k < 0 ? '' : ' · ' + GOD), rangeTxt(r) + (k < 0 ? '' : ' · ' + GOD + ' only (made in and sold from ' + GOD + ')') + ' · items made in this period, against what was sold. Helps decide what to make next. Click an item to see its entries.', godSeg() + perSeg('pvsP', RP.pvs, ['week', 'month', 'lmonth', 'd30', 'all', 'custom'])) +
+    custBar(RP.pvs) +
     '<div class="grid" style="margin-bottom:12px">' + tile('Items made', rows.length, '', '') + tile('Selling faster than made', sell, 'items', 'sold more than 110% of production') + tile('Piling up', pile, 'items', 'made 2× sales and over 60 days of stock') + '</div>' +
-    table('pvs', [{ k: 'p', l: 'Item', f: r => pLink(r.pp) }, { k: 'u', l: 'Unit' }, { k: 'made', l: 'Made', n: 1 }, { k: 'sold', l: 'Sold', n: 1 }, { k: 'net', l: 'Made − sold', n: 1, neg: 1 }, { k: 'tot', l: 'Stock now', n: 1, neg: 1 }, { k: 'days', l: 'Days left', n: 1, f: r => r.days == null ? '—' : r.days }, { k: 'flag', l: 'Signal', f: r => r.flag === 'sell' ? '<span class="tag t-warn">Make more</span>' : r.flag === 'pile' ? '<span class="tag t-info">Slow down</span>' : '' }],
+    table('pvs', [{ k: 'p', l: 'Item', f: r => eLink(r.pp, 'pvs'), sv: r => r.p }, { k: 'u', l: 'Unit' }, { k: 'made', l: 'Made', n: 1 }, { k: 'sold', l: 'Sold', n: 1 }, { k: 'net', l: 'Made − sold', n: 1, neg: 1 }, { k: 'tot', l: k < 0 ? 'Stock now' : GOD + ' stock now', n: 1, neg: 1 }, { k: 'days', l: 'Days left', n: 1, f: r => r.days == null ? '—' : r.days }, { k: 'flag', l: 'Signal', f: r => r.flag === 'sell' ? '<span class="tag t-warn">Make more</span>' : r.flag === 'pile' ? '<span class="tag t-info">Slow down</span>' : '' }],
       rows, { sort: 'net', dir: 1, maxH: 620, rerender: renderPvs }) + '</div>';
 }
 SEGH.pvsP = v => { RP.pvs = v; renderPvs(); };
 
-function wireRows() {
-  const use30 = sumType(ASOF - 29, ASOF, T['Usage']);
-  return P.filter(p => p.unit === 'kg' && /wire/i.test(p.c) && !/barbed/i.test(p.c)).map(p => { const per = (use30[p.i] + SOLD30[p.i]) / 30; return { pp: p, p: p.p, c: p.c, stock: p.tot, use30: r2(per), used: use30[p.i], sold: SOLD30[p.i], days: per > 0 ? (p.tot > 0 ? Math.round(p.tot / per) : 0) : null }; });
+function wireRows(k) {   // k = one godown (index in LOCS); left out = all godowns
+  if (k == null) k = -1;
+  const use30 = sumTypeG(ASOF - 29, ASOF, T['Usage'], k), sold30 = k < 0 ? SOLD30 : sumTypeG(ASOF - 29, ASOF, T['Sales'], k);
+  return P.filter(p => p.unit === 'kg' && /wire/i.test(p.c) && !/barbed/i.test(p.c)).map(p => { const per = (use30[p.i] + sold30[p.i]) / 30, st = gStock(p, k); return { pp: p, p: p.p, c: p.c, stock: st, use30: r2(per), used: use30[p.i], sold: sold30[p.i], days: per > 0 ? (st > 0 ? Math.round(st / per) : 0) : null }; });
 }
 function wireOrder() {   // like the GI Wire Reorder Dashboard: wire needed to bring items back to green
   const m = new Map();
@@ -1241,10 +1567,12 @@ function wireOrder() {   // like the GI Wire Reorder Dashboard: wire needed to b
   return [...m.values()].map(o => Object.assign(o, { kg: Math.round(o.kg), n: o.items.length }));
 }
 function renderWire() {
-  const r = PERIODS[RP.wire].r(), use = sumType(r[0], r[1], T['Usage']), W = wireRows(), O = wireOrder();
+  const k = godK(), r = PERIODS[RP.wire].r(), use = sumTypeG(r[0], r[1], T['Usage'], k), W = wireRows(k), O = wireOrder();
+  ENT.wire = { r, types: [T['Usage'], T['Sales']], k, title: 'Wire used and sold' };
   const rows = W.map(w => Object.assign({}, w, { per: use[w.pp.i] })).filter(w => w.per > 0 || w.stock !== 0);
-  $('t-r-wire').innerHTML = '<div class="card">' + head('Wire usage & reorder', 'Wire used in production (STOCK OUT · Usage) for ' + rangeTxt(r) + ', wire stock, and days left at the last 30 days’ rate (usage + sales).', perSeg('wireP', RP.wire, ['week', 'month', 'lmonth', 'd30', 'all'])) +
-    table('wire', [{ k: 'p', l: 'Wire', f: r => pLink(r.pp) }, { k: 'per', l: 'Used in period (kg)', n: 1 }, { k: 'stock', l: 'Stock kg', n: 1, neg: 1 }, { k: 'use30', l: 'Per day (30 d)', n: 1 }, { k: 'days', l: 'Days left', n: 1, f: r => r.days == null ? '—' : (r.days < 15 ? '<b class="neg">' + r.days + '</b>' : r.days) }], rows, { sort: 'per', maxH: 480, rerender: renderWire }) + '</div>' +
+  $('t-r-wire').innerHTML = '<div class="card">' + head('Wire usage & reorder' + (k < 0 ? '' : ' · ' + GOD), 'Wire used in production (STOCK OUT · Usage)' + (k < 0 ? '' : ' in ' + GOD) + ' for ' + rangeTxt(r) + ', wire stock' + (k < 0 ? '' : ' in ' + GOD) + ', and days left at the last 30 days’ rate (usage + sales). Click a wire to see its entries.', godSeg() + perSeg('wireP', RP.wire, ['week', 'month', 'lmonth', 'd30', 'all', 'custom'])) +
+    custBar(RP.wire) +
+    table('wire', [{ k: 'p', l: 'Wire', f: r => eLink(r.pp, 'wire'), sv: r => r.p }, { k: 'per', l: 'Used in period (kg)', n: 1 }, { k: 'stock', l: k < 0 ? 'Stock kg' : GOD + ' stock kg', n: 1, neg: 1 }, { k: 'use30', l: 'Per day (30 d)', n: 1 }, { k: 'days', l: 'Days left', n: 1, f: r => r.days == null ? '—' : (r.days < 15 ? '<b class="neg">' + r.days + '</b>' : r.days) }], rows, { sort: 'per', maxH: 480, rerender: renderWire }) + '</div>' +
     '<div class="card">' + head('Wire to order for low items', 'From CURRENT STOCK: items below their green level × average weight, grouped by the wire they are made from (same idea as the “GI Wire Reorder Dashboard” tab).') +
     table('wireO', [{ k: 'wire', l: 'Wire used' }, { k: 'kg', l: 'Wire needed (kg)', n: 1, f: r => '<b>' + fmt(r.kg) + '</b>' }, { k: 'n', l: 'Items', n: 1 }, { k: 'items', l: 'Items below green', f: r => '<span class="small muted">' + esc(r.items.slice(0, 6).join(', ')) + (r.items.length > 6 ? '…' : '') + '</span>', sv: r => r.n }], O, { sort: 'kg', rerender: renderWire }) + '</div>';
 }
@@ -1284,14 +1612,16 @@ SEGH.itemF = v => { RP.item = v === 0 ? '' : v; renderItem(); };
 
 function renderChecks() {
   const noW = P.filter(p => p.unit === 'pcs' && !p.kgPer && p.c !== '(not in CURRENT STOCK)').length;
-  let tIn = 0, tOut = 0; D.mv.forEach(m => { if (m[4] === T['Transfer in']) tIn += m[2]; if (m[4] === T['Transfer Out']) tOut += m[2]; });
+  let tIn = 0, tOut = 0; D.mv.forEach(m => { if (isBrX(m)) return; if (m[4] === T['Transfer in']) tIn += m[2]; if (m[4] === T['Transfer Out']) tOut += m[2]; });
+  const xBad = TX().recs.filter(x => x.flag);
   const neg = P.filter(p => p.tot < 0).length, fgNoSale = ITURNS().filter(x => !x.p.raw && x.st === 'nosale').length;
   const unknown = P.filter(p => p.c === '(not in CURRENT STOCK)');
   const A = attention();
   const diff = P.filter(p => p.c !== '(not in CURRENT STOCK)' && Math.abs(p.tot - HIST.end[ASOF][p.i]) > 0.01);
   const rows = [
     ['Piece items with no average weight', noW, 'Left out of the kg figures (Inventory turns). Fill Avg weight in CURRENT STOCK.', 'r-inv'],
-    ['Transfer out minus transfer in (qty)', r2(tOut - tIn), 'Should be 0. A gap = goods in transit or a missed entry at the receiving godown.', 'r-move'],
+    ['Transfer out minus transfer in (qty), WH / BB2 / BB1', r2(tOut - tIn), 'Should be 0. A gap = goods in transit or a missed entry at the receiving godown. Transfers to / from other branches are left out (they have one side only).', 'r-xfer'],
+    ['Transfers not matched (from ' + D.xferFrom + ')', xBad.length, 'A Transfer Out without its Transfer in (or the other way), a different quantity, or the Godown column empty.', 'r-xfer'],
     ['Items with negative total stock', neg, 'Stock went out before it was entered in.', 'r-neg'],
     ['Finished goods with stock but no sales', fgNoSale, 'Slow or dead stock to review.', 'r-slow'],
     ['Names in STOCK IN / OUT not in CURRENT STOCK', unknown.length, unknown.map(p => p.p).join(', ') || '—', 'stock'],
@@ -1306,11 +1636,11 @@ function renderChecks() {
 const TITLES = {
   dash: ['Dashboard', 'Top movers first; everything else folds open'], stock: ['Current stock', 'WH, BB2 and BB1 — click an item for its card'],
   'r-top': ['Top movers', 'Sales only — pieces and kg kept separate'], 'r-slow': ['Slow & dead stock', 'Items with stock that are not selling'], 'r-restock': ['Restock list', 'Below red level, with quantity up to green'],
-  'r-move': ['Stock movement', 'Every entry per item, for the period you pick'], 'r-neg': ['Negative stock', 'Kept off the dashboard'], 'r-month': ['Month-end report', 'Opening, in, out, closing per category'],
+  'r-move': ['Stock movement', 'Every entry per item, for the period you pick'], 'r-xfer': ['Transfers', 'Between WH, BB2, BB1 and to / from other branches'], 'r-neg': ['Negative stock', 'Kept off the dashboard'], 'r-month': ['Month-end report', 'Opening, in, out, closing per category'],
   'r-prod': ['Production report', 'By day, godown and item'], 'r-pvs': ['Production vs sales', 'What to make more of, what to slow down'], 'r-wire': ['Wire usage & reorder', 'Wire used, stock, days left, wire to order'],
   'r-inv': ['Inventory turns', 'How fast stock is sold and replaced'], 'r-item': ['Item turns', 'Turns per item'], 'r-checks': ['Data checks', 'Things that make the figures less accurate']
 };
-const RENDER = { dash: renderDash, stock: renderStock, 'r-top': renderTop, 'r-slow': renderSlow, 'r-restock': renderRestock, 'r-move': renderMove, 'r-neg': renderNeg, 'r-month': renderMonth, 'r-prod': renderProdR, 'r-pvs': renderPvs, 'r-wire': renderWire, 'r-inv': renderInv, 'r-item': renderItem, 'r-checks': renderChecks };
+const RENDER = { dash: renderDash, stock: renderStock, 'r-top': renderTop, 'r-slow': renderSlow, 'r-restock': renderRestock, 'r-move': renderMove, 'r-xfer': renderXfer, 'r-neg': renderNeg, 'r-month': renderMonth, 'r-prod': renderProdR, 'r-pvs': renderPvs, 'r-wire': renderWire, 'r-inv': renderInv, 'r-item': renderItem, 'r-checks': renderChecks };
 let ROLE = 'mgmt', CUR = 'dash';
 const ROLE_LABEL = { mgmt: 'Management admin', staff: 'Staff admin', user: 'User' };
 function allowed(t) { if (ROLE === 'user') return t === 'stock'; return true; }
@@ -1334,14 +1664,23 @@ $('nav').addEventListener('click', e => {
   const a = e.target.closest('a'); if (!a) return;
   if (a.classList.contains('grp')) { a.classList.toggle('closed'); if (document.body.classList.contains('collapsed')) { document.body.classList.remove('collapsed'); a.classList.remove('closed'); } return; }
   if (a.dataset.t) { e.preventDefault(); showTab(a.dataset.t); }
-});
+}, SIG);
 $('burger').onclick = () => document.body.classList.toggle('collapsed');
 $('mburger').onclick = () => document.body.classList.add('drawer');
 $('scrim').onclick = () => document.body.classList.remove('drawer');
-$('asOf').textContent = D.hasLog ? 'Entries up to ' + dStr(ASOF) + (D.at ? ' · loaded ' + D.at.slice(-5) : '') : 'Stock as of ' + (D.at || 'now');
+$('asOf').dataset.base = D.hasLog ? 'Entries up to ' + dStr(ASOF) : 'Stock as of ' + (D.at || 'now').slice(0, 10); $('asOf').textContent = $('asOf').dataset.base;
 $('toEntry').href = ENTRY_URL;
 window.onThemeChange = () => { if (CUR === 'dash') renderDash(); };
-let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (CUR === 'dash') { drawTrend(); drawCats(); } if (CUR === 'r-prod') renderProdR(); }, 200); });
+let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (CUR === 'dash') { drawTrend(); drawCats(); } if (CUR === 'r-prod') renderProdR(); }, 200); }, SIG);
+// what the page looks like now (tab, periods, filters, sort order), so new figures can be shown without losing it
+const clone = o => JSON.parse(JSON.stringify(o));
+window.__APP_STATE = () => ({ CUR, RP: clone(RP), TM: clone(TM), MV: Object.assign(clone(Object.assign({}, MV, { open: [] })), { open: [...MV.open] }), SORTS: clone(SORTS), CS: clone(CS), DSH: clone(DSH), CUSTOM: clone(CUSTOM), MVO: MVO.o });
+if (KEEP) {
+  try {
+    Object.assign(RP, KEEP.RP); Object.assign(TM.dash, KEEP.TM.dash); Object.assign(TM.rep, KEEP.TM.rep); Object.assign(SORTS, KEEP.SORTS); Object.assign(CS, KEEP.CS); Object.assign(DSH, KEEP.DSH); Object.assign(CUSTOM, KEEP.CUSTOM);
+    Object.assign(MV, KEEP.MV, { open: new Set(KEEP.MV.open) }); MVO.o = KEEP.MVO || MVO.o; CUR = KEEP.CUR || CUR;
+  } catch (e) {}
+}
 setRole(ROLE0);
 }
 startShell();   // after startApp exists

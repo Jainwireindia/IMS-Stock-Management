@@ -140,6 +140,8 @@ tr.skip td{opacity:.45}
 .seg button.on{background:var(--brand);color:var(--brand-ink);font-weight:600}
 .seg button small{opacity:.75;font-variant-numeric:tabular-nums}
 .seg button.short{box-shadow:inset 0 -3px 0 var(--bad)}
+select.short{border-color:var(--bad);box-shadow:inset 0 -3px 0 var(--bad)}
+.tag.t-br{background:var(--info-bg);color:var(--info)}
 .msg{padding:10px 13px;border-radius:9px;margin:8px 0;white-space:pre-line}
 .msg.ok{background:var(--ok-bg);color:var(--ok)} .msg.bad{background:var(--bad-bg);color:var(--bad)}
 .msg.warn{background:var(--warn-bg);color:var(--warn)} .msg.info{background:var(--info-bg);color:var(--info)}
@@ -185,6 +187,35 @@ tr.skip td{opacity:.45}
 .gate-card input{font-size:15px;padding:10px 11px}
 .gate-card button{padding:11px;font-size:15px;margin-top:4px}
 #gMsg{color:var(--bad);min-height:18px}
+/* login card (v2.1.0) */
+.gtabs{display:grid;grid-template-columns:1fr 1fr;background:var(--soft);border-radius:11px;padding:3px;gap:3px}
+.gtabs button{border:0;background:none;padding:8px 6px;border-radius:8px;font:inherit;font-size:14px;font-weight:700;color:var(--muted);cursor:pointer}
+.gtabs button.on{background:var(--card);color:var(--brand);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.gate-card form{display:grid;gap:12px}
+.gate-card form[hidden],.gate-card [hidden]{display:none!important}
+.pw{position:relative;display:block}
+.pw input{width:100%;box-sizing:border-box;padding-right:44px}
+.pw .eye{position:absolute;right:3px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--muted);cursor:pointer;padding:7px;border-radius:7px;display:grid;margin:0}
+.pw .eye:hover{background:var(--soft);color:var(--ink)}
+.caps{font-size:12px;color:var(--warn);background:var(--warn-bg);border-radius:7px;padding:5px 9px}
+.gmsg{font-size:13px;color:var(--bad);min-height:18px;line-height:1.4}
+.gate-card button.p{display:flex;align-items:center;justify-content:center;gap:8px}
+.gate-card button.p:disabled{opacity:.75;cursor:progress}
+.spin{width:15px;height:15px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;display:inline-block;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.steps{list-style:none;margin:0;padding:10px 12px;display:grid;gap:8px;font-size:13.5px;background:var(--soft);border-radius:10px}
+.steps li{display:flex;gap:9px;align-items:center;color:var(--muted)}
+.steps li::before{content:'';width:12px;height:12px;flex:0 0 12px;border-radius:50%;border:2px solid var(--line)}
+.steps li.on{color:var(--ink);font-weight:650}
+.steps li.on::before{border-color:var(--brand);border-right-color:transparent;animation:spin .8s linear infinite}
+.steps li.done{color:var(--ok)}
+.steps li.done::before{background:var(--ok);border-color:var(--ok)}
+.steps li.err{color:var(--bad);font-weight:650}
+.steps li.err::before{background:var(--bad);border-color:var(--bad)}
+.steps li .t{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--muted);font-weight:500;font-size:12px}
+.ghint{font-size:12px;color:var(--muted);margin:0}
+.gate-card button.p{margin-top:4px}
+.steps li .t{white-space:nowrap}
 
 .chip-sync{font:inherit;font-size:12.5px;padding:5px 11px;border-radius:99px;border:0;cursor:pointer;background:var(--ok-bg);color:var(--ok)}
 .chip-sync.info{background:var(--info-bg);color:var(--info)} .chip-sync.warn{background:var(--warn-bg);color:var(--warn)} .chip-sync.bad{background:var(--bad-bg);color:var(--bad)}
@@ -216,6 +247,11 @@ a.il:hover{color:var(--brand)}
 .catorder .cn{flex:1;font-weight:500}
 .catorder .grip{color:var(--muted);letter-spacing:-2px}
 
+button.b.sm{padding:3px 9px;font-size:12px;border-radius:7px;margin-right:2px}
+tr.part td:first-child{padding-left:22px;border-left:3px solid var(--brand)}
+tr.part td{background:color-mix(in srgb,var(--soft) 55%,transparent)}
+.splitsum{display:block;margin-top:2px;font-weight:600}
+.splitsum.ok{color:var(--ok)} .splitsum.no{color:var(--bad)}
 /* ── fit any width: wide screens use the whole space; narrow / split-screen rows stack as small cards ── */
 .tw{container-type:inline-size}
 @container (max-width:1020px){
@@ -308,11 +344,13 @@ input,select,textarea{font-weight:500}
     <svg width="44" height="44" viewBox="0 0 30 30" aria-hidden="true"><rect x="1" y="1" width="28" height="28" rx="7" fill="#2A9D95"/><g stroke="#e3a613" stroke-width="1.6"><path d="M10 6v18M15 6v18M20 6v18M6 10h18M6 15h18M6 20h18"/></g></svg>
     <h1>IMS Stock Entry</h1>
     <p>Jain Wire Netting, Angamaly · staff admin login</p>
-    <label>Username<input id="gUser" autocomplete="username"></label>
-    <label>Password<input id="gKey" type="password" autocomplete="current-password"></label>
-    <button class="b p" type="button" id="gGo">Log in</button>
-    <div id="gMsg" class="small" style="color:var(--bad);min-height:18px"></div>
-    <div class="small muted">Opened from the IMS Stock Dashboard? A staff admin is logged in here automatically.</div>
+    <label>Username<input id="gUser" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
+    <label>Password<span class="pw"><input id="gKey" type="password" autocomplete="current-password"><button type="button" class="eye" id="gEye" title="Show password" aria-label="Show password"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path id="gEyeX" d="M4 4l16 16" hidden/></svg></button></span></label>
+    <div class="caps" id="gCaps" hidden>Caps Lock is on</div>
+    <button class="b p" type="submit" id="gGo"><span class="spin" id="gSpin" hidden></span><span id="gGoTxt">Log in</span></button>
+    <div id="gMsg" class="small" role="alert"></div>
+    <ol class="steps" id="gSteps" hidden><li data-s="1">Checking the login</li><li data-s="2">Loading products, names and entries</li><li data-s="3">Getting the tool ready</li></ol>
+    <div class="small muted">Opened from the IMS Stock Dashboard? A staff admin is logged in here automatically. You stay logged in on this device for 14 days.</div>
     <div class="small muted" id="gVer" style="margin-top:6px"></div>
   </form>
 </div>
@@ -405,6 +443,7 @@ input,select,textarea{font-weight:500}
     <div class="checks" id="loadChecks"></div>
     <div class="row" style="margin:8px 0">
       <button class="b" id="loadConfirmAll">Accept all suggested names</button>
+      <button class="b" id="loadAdd">+ Add a line</button>
       <span class="muted small">Set every row to:</span>
       <span class="seg" id="loadAllLoc"><button data-l="WH">WH</button><button data-l="BB2">BB2</button><button data-l="BB1">BB1</button></span>
     </div>
@@ -440,9 +479,9 @@ input,select,textarea{font-weight:500}
     <div class="row">
       <label>Date <input class="date" id="xDate" placeholder="dd-mm-yyyy" inputmode="numeric"></label>
       <label>From <select id="xFrom"><option>WH</option><option>BB2</option><option>BB1</option></select></label>
-      <label>To <select id="xTo"><option>WH</option><option>BB2</option><option>BB1</option></select></label>
+      <label>To <select id="xTo"><option>WH</option><option selected>BB2</option><option>BB1</option></select></label>
     </div>
-    <p class="muted small">Paste the transfer message or add rows. From / To above apply to new rows; you can change each row.</p>
+    <p class="muted small">Paste the transfer message or add rows. From / To above apply to new rows; you can change each row. Between WH, BB2 and BB1 one line writes both rows (STOCK OUT and STOCK IN, each with the other godown in the Godown column). To another branch (Jain EKM, Calicut, Kannur, Office) only the STOCK OUT is written; from a branch only the STOCK IN.</p>
     <textarea id="xPaste" placeholder="Paste transfer lines here"></textarea>
     <div class="row" style="margin-top:8px"><button class="b" id="xRead">Read lines</button><button class="b" id="xAdd">+ Add empty row</button></div>
     <div id="xMsg"></div>
@@ -506,10 +545,39 @@ input,select,textarea{font-weight:500}
 
 <script>
 'use strict';
-const VERSION = 'v2.0.5';
-const SHEET_SCRIPT = 'v2.0.0';
+const VERSION = 'v2.2.0';
+const SHEET_SCRIPT = 'v2.2.0';
 const DASH_URL = '../';   // the IMS Stock Dashboard (same site, one folder up)
 const LOCS = ['WH', 'BB2', 'BB1'];
+// Godowns (GODOWNS tab of the sheet): WH / BB2 / BB1 keep stock here; branches (Jain EKM, Calicut, Kannur, Office) are far away:
+// a transfer to a branch is only a STOCK OUT, a transfer from a branch only a STOCK IN.
+const GODOWNS_DEFAULT = [{ n: 'WH', k: 'internal', al: [] }, { n: 'BB2', k: 'internal', al: [] }, { n: 'BB1', k: 'internal', al: [] },
+  { n: 'Jain EKM', k: 'branch', al: ['jain ekm', 'jain ernakulam'] }, { n: 'Jain Calicut', k: 'branch', al: ['jain calicut', 'jain clt', 'jain kozhikode'] },
+  { n: 'Jain Kannur', k: 'branch', al: ['jain kannur', 'jain knr'] }, { n: 'Jain Office', k: 'branch', al: ['jain office'] }];
+let BRANCHES = GODOWNS_DEFAULT.filter(g => g.k === 'branch');
+const isBranch = n => BRANCHES.some(b => b.n === n);
+// a customer heading in a loading list that is one of our branches → that branch name, else ''
+function branchOf(cust) {
+  const c = ' ' + String(cust || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() + ' ';
+  if (c.trim() === '') return '';
+  const jain = c.includes(' jain ');
+  for (const b of BRANCHES) for (const a of [b.n].concat(b.al || [])) {
+    const k = ' ' + String(a).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() + ' ';
+    if (!k.trim()) continue;
+    if (c.includes(k)) return b.n;                                   // "Jain Calicut", "jain clt", …
+    const w = k.replace(' jain ', ' ');                              // "CLT Jain", "Jain - Calicut branch"
+    if (jain && w.trim() && w !== k && c.includes(w)) return b.n;
+  }
+  return '';
+}
+function godOptions(sel, withStockOf, side) {   // side 'from' | 'to'
+  const int = LOCS.map(l => '<option value="' + l + '"' + (l === sel ? ' selected' : '') + '>' + l + (withStockOf ? ' · ' + fmtN(stockAt(withStockOf, l)) : '') + '</option>').join('');
+  const br = BRANCHES.map(b => '<option value="' + esc(b.n) + '"' + (b.n === sel ? ' selected' : '') + '>' + esc(b.n) + '</option>').join('');
+  return int + (br ? '<optgroup label="' + (side === 'from' ? 'From a branch (stock in only)' : 'To a branch (stock out only)') + '">' + br + '</optgroup>' : '');
+}
+function fillGodSelects() {
+  ['xFrom', 'xTo'].forEach(id => { const el = $(id); if (!el) return; const v = el.value || (id === 'xFrom' ? 'WH' : 'BB2'); el.innerHTML = godOptions(v, null, id === 'xFrom' ? 'from' : 'to'); el.value = v; });
+}
 const IN_TYPES = ['Purchase', 'Return', 'Production', 'Stock Correction', 'Opening balance'];
 const OUT_TYPES = ['Sales', 'Usage', 'Stock correction'];
 const KG_CATS = ['gi wire', 'supreme gi wire', 'tata gi wire', 'pvc wire', 'ss wire', 'wire', 'barbed wire', 'aluminium coil'];
@@ -597,41 +665,84 @@ async function api(action, extra) {
 }
 function setConn(state, text) { const c = $('conn'); c.className = state; c.textContent = text; }
 
-// Data from the sheet is also kept in this browser, so the tool opens at once and refreshes in the background
+// Data from the sheet is also kept in this browser (IndexedDB, no size limit), so the tool opens at once.
+// Every minute it asks the sheet "anything new?": nothing → no download; only new rows → just those rows.
 const CACHE_KEY = 'imsEntry.cache';
-function cacheSave(a) { try { localStorage.setItem(CACHE_KEY, JSON.stringify({ at: nowStr(), url: S.url, data: a })); } catch (e) { try { localStorage.removeItem(CACHE_KEY); } catch (x) {} } }
-function cacheRead() { try { const c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null'); return c && c.url === S.url ? c : null; } catch (e) { return null; } }
-async function fetchAll() {
-  let a = await api('all'), b;
+try { localStorage.removeItem(CACHE_KEY); } catch (e) {}   // v2.0.x kept the copy in localStorage (too small)
+const IDB = {
+  p: null,
+  open() {
+    if (!this.p) this.p = new Promise(ok => {
+      let done = false; const fin = v => { if (!done) { done = true; ok(v); } };
+      setTimeout(() => fin(null), 3000);
+      try { const r = indexedDB.open('ims', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => fin(r.result); r.onerror = () => fin(null); r.onblocked = () => fin(null); } catch (e) { fin(null); }
+    });
+    return this.p;
+  },
+  async get(k) { const db = await this.open(); if (!db) return null; return new Promise(ok => { try { const q = db.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => ok(q.result || null); q.onerror = () => ok(null); } catch (e) { ok(null); } }); },
+  async set(k, v) { const db = await this.open(); if (!db) return false; return new Promise(ok => { try { const t = db.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = () => ok(true); t.onerror = () => ok(false); } catch (e) { ok(false); } }); },
+  async del(k) { const db = await this.open(); if (!db) return; return new Promise(ok => { try { const t = db.transaction('kv', 'readwrite'); t.objectStore('kv').delete(k); t.oncomplete = () => ok(); t.onerror = () => ok(); } catch (e) { ok(); } }); }
+};
+const cacheKey = () => 'entry|' + S.url;
+function cacheSave(a) { IDB.set(cacheKey(), { at: nowStr(), url: S.url, data: a, fullAt: S.fullAt || 0 }); }
+function cacheRead() { return IDB.get(cacheKey()).then(c => c && c.url === S.url && c.data ? c : null); }
+const maxRow = rows => { let m = 2; if (rows) for (const r of rows) if (r[0] > m) m = r[0]; return m; };
+const hmNow = () => { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+function stripRaw(j) { const r = Object.assign({}, j); delete r.ok; delete r.delta; delete r.same; return r; }
+async function fetchAll(since) {
+  const a = await api('all', since ? { since } : {});
   if (!a.ok) throw new Error(a.error);
+  if (a.same) return a;
   if (!a.log || a.log.ok === false) throw new Error((a.log && a.log.error) || 'Could not read STOCK IN / STOCK OUT');
   return a;
 }
+function connText() { return 'Connected · ' + S.products.length + ' products' + (S.checkedAt ? ' · checked ' + hmNow() : ''); }
 function useData(a, label) {
+  S.raw = a;
   ingest(a); S.log = { IN: a.log.IN.slice(), OUT: a.log.OUT.slice() };
   OB.items.filter(i => i.state !== 'done').forEach(applyLocal);   // saves not yet on the sheet
   S.ready = true;
-  setConn(label ? 'warn' : 'ok', label || ('Connected · ' + S.products.length + ' products'));
+  setConn(label ? 'warn' : 'ok', label || connText());
   renderCatOrder(); renderViews();
 }
+// opts.quiet: background check (no "Updating…", grids are not redrawn). opts.full: whole sheet, not just what is new.
 async function loadAll(opts) {
   const quiet = opts && opts.quiet;
+  if (S.loading) return; S.loading = true;
   if (!quiet && !S.ready) setConn('', 'Loading…');
   if (!quiet && S.ready) setConn('warn', 'Updating…');
   try {
-    const a = await fetchAll();
-    useData(a);
+    const full = (opts && opts.full) || !S.raw || !S.raw.rev || Date.now() - (S.fullAt || 0) > 30 * 60e3;   // a full reload every 30 minutes, to be safe
+    const since = full ? null : { rev: S.raw.rev, IN: maxRow(S.raw.log.IN), OUT: maxRow(S.raw.log.OUT) };
+    const a = await fetchAll(since);
+    S.checkedAt = Date.now(); if (!since) S.fullAt = Date.now();
+    if (a.same) { S.raw.rev = a.rev; cacheSave(S.raw); if (S.ready) setConn('ok', connText()); if (!quiet) refreshGrids(); obSync(); return; }
+    const raw = a.delta ? Object.assign(stripRaw(a), { log: { IN: S.raw.log.IN.concat(a.log.IN), OUT: S.raw.log.OUT.concat(a.log.OUT) } }) : stripRaw(a);
+    useData(raw);
     S.loadedAt = Date.now();
     if (!quiet) refreshGrids();
-    cacheSave(a);
+    cacheSave(raw);
     obSync();
   } catch (e) {
-    if (quiet) return;
+    if (quiet) { if (S.ready && S.token) setConn('warn', 'Offline · showing saved copy · tries again every minute'); return; }
     if (!S.token) { setConn('bad', 'Not connected'); return; }   // login ended: the login screen is showing
     if (S.ready) { setConn('bad', 'Offline · showing saved copy'); return; }
     setConn('bad', 'Not connected');
     $('homeBody').innerHTML = '<div class="card msg bad">' + esc(e.message === 'Failed to fetch' ? 'Could not reach the sheet script. Check the internet connection.' : e.message || e) + '</div>';
-  }
+  } finally { S.loading = false; }
+}
+// the minute check (only while the page is open and visible; not while a save is on its way)
+let syncLoop = false;
+function startSyncLoop() {
+  if (syncLoop) return; syncLoop = true;
+  const tick = () => {
+    if (!S.token || !S.ready || !S.raw || !S.raw.rev || document.visibilityState !== 'visible') return;
+    if (OB.busy || OB.items.some(i => i.state === 'sending')) return;
+    if (Date.now() - (S.checkedAt || 0) >= 58000) loadAll({ quiet: true });
+  };
+  setInterval(tick, 5000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && Date.now() - (S.checkedAt || 0) >= 30000) tick(); });
+  window.addEventListener('online', () => { S.checkedAt = 0; tick(); });
 }
 
 function ingest(a) {
@@ -655,6 +766,9 @@ function ingest(a) {
   S.finderInfo = { tab: a.finderTab || '', rows: (a.finder || []).length, vars: fv, note: a.finderNote || '' };
   renderFinderInfo();
   S.batches = a.batches || [];
+  if (Array.isArray(a.godowns) && a.godowns.length) BRANCHES = a.godowns.filter(g => g.k === 'branch');
+  S.xferFrom = a.xferFrom || '05-11-2026';
+  fillGodSelects();
   // suggestion index
   S.cands = [];
   for (const p of S.products) S.cands.push(candOf(p, p.p));
@@ -917,7 +1031,7 @@ const PM = (() => {
     for (const b of out) {
       const all = b.header + '\n' + b.lines.join('\n');
       b.shift = /night/i.test(b.header) ? 'night' : 'day';
-      b.loc = /\bbb\s*2\b/i.test(b.header) ? 'BB2' : /\bbb\s*1\b/i.test(b.header) ? 'BB1' : (/\bm\s*[-–]?\s*\d\b/i.test(all) || /coil/i.test(all) ? 'BB2' : 'BB1');
+      b.loc = /chain\s*-?\s*link|barbed/i.test(b.header) ? 'OTHER' : /\bbb\s*2\b/i.test(b.header) ? 'BB2' : /\bbb\s*1\b/i.test(b.header) ? 'BB1' : (/\bm\s*[-–]?\s*\d\b/i.test(all) || /coil/i.test(all) ? 'BB2' : 'BB1');
     }
     return out;
   }
@@ -949,7 +1063,8 @@ const PM = (() => {
       let m = /^m\s*[-–]?\s*(\d)\b(.*)$/i.exec(line);
       if (m) {
         mode = 'machine'; machine = 'M-' + m[1]; lastRoll = null;
-        res.machines.push({ shift: b.shift, machine, off: /\b(off|stop|stopped|no production|idle)\b/i.test(m[2]) });
+        const tm = /team\s*[-:]?\s*([a-z0-9]+)/i.exec(m[2]);
+        res.machines.push({ shift: b.shift, machine, team: tm ? 'TEAM ' + tm[1].toUpperCase() : null, off: /\b(off|stop|stopped|no production|idle)\b/i.test(m[2]) });
         continue;
       }
       if (/wire\s*used/i.test(line)) { mode = 'wire'; lastRoll = null; continue; }
@@ -978,6 +1093,7 @@ const PM = (() => {
     const res = { date: '', blocks: [], items: [], wires: [], machines: [], notes: [] };
     for (const b of blocks(text)) {
       if (!res.date && b.date) res.date = b.date;
+      if (b.loc === 'OTHER') { res.notes.push({ shift: b.shift, line: b.header, why: 'chainlink / barbed message: type those items in step 2' }); continue; }
       res.blocks.push({ loc: b.loc, shift: b.shift, date: b.date, header: b.header });
       if (b.loc === 'BB2') parseBB2(b, res, cfg); else parseBB1(b, res);
     }
@@ -1052,7 +1168,8 @@ const PM = (() => {
     for (const sh of ['day', 'night']) {
       cell(r, 0, sh.toUpperCase(), 'yelB'); box(r, 4); r++; const from = r;
       for (const mc of ['M-2', 'M-3']) {
-        cell(r, 0, T2[sh][mc] + ' PRODUCTION', 'bB'); box(r, 4); r++;
+        const mi = (p.machines || []).filter(x => x.shift === sh && x.machine === mc && x.team).pop();
+        cell(r, 0, (mi ? mi.team : T2[sh][mc]) + ' PRODUCTION', 'bB'); box(r, 4); r++;
         const its = p.items.filter(i => i.kind === 'bb2m' && i.shift === sh && i.machine === mc);
         if (!its.length) line('NO PRODUCTION', 0, 0); else its.forEach(i => line(i.src, i.count, i.perKg));
       }
@@ -1410,6 +1527,18 @@ function defaultGodown(r) {
   if (stockAt(r.prod, 'WH') >= q) return 'WH';
   return LOCS.slice().sort((a, b) => stockAt(r.prod, b) - stockAt(r.prod, a))[0];
 }
+// split one list line over two godowns: the new line goes under it; if the first godown cannot cover the whole quantity,
+// the first line keeps what the godown has and the new line gets the rest
+function splitLoadRow(rows, i) {
+  const r = rows[i]; let qNew = null, loc = LOCS.find(l => l !== r.loc);
+  if (r.prod) {
+    const rem = remainingFor(rows, i), have = Math.max(0, Math.floor(rem[r.loc] * 1000) / 1000);
+    if (r.qty > 0 && have > 0 && have < r.qty) { qNew = r3(r.qty - have); r.qty = have; rem[r.loc] -= have; } else if (r.qty > 0) rem[r.loc] -= r.qty;
+    loc = LOCS.filter(l => l !== r.loc).sort((a, b) => rem[b] - rem[a])[0] || loc;
+  }
+  rows.splice(i + 1, 0, Object.assign({}, r, { part: true, manual: false, skip: false, qty: qNew, loc, alias: null, adding: false, newErr: '' }));
+  return i + 1;
+}
 function applyLoadDefaults(r) { r.basis = defaultBasis(r); r.qty = qtyFor(r); r.loc = defaultGodown(r); }
 
 async function onLoadFile(file) {
@@ -1444,24 +1573,37 @@ function renderLoad() {
   let shortN = 0;
   let h = '<thead><tr><th>Name in list</th><th>IMS product</th><th></th><th>In list</th><th>Use</th><th class="n">Qty</th><th>Gone from</th><th></th></tr></thead><tbody>';
   let lastCust = null;
+  // a line that was split over godowns: the parts should add up to what the list says
+  const splitInfo = {};
+  g.rows.forEach((r, i) => { if (r.part || r.manual) return; let j = i + 1; const idx = [i]; while (j < g.rows.length && g.rows[j].part) idx.push(j++); if (idx.length < 2) return;
+    const rs = idx.map(k => g.rows[k]).filter(x => !x.skip), want = r.basis === 'total' ? r.total : r.nos;
+    if (rs.some(x => x.basis !== r.basis) || want == null) return;
+    const empty = rs.some(x => !(x.qty > 0)), qs = rs.map(x => x.qty > 0 ? x.qty : 0), sum = r3(qs.reduce((p, c) => p + c, 0)), okSum = !empty && Math.abs(sum - want) < 0.0005;
+    splitInfo[i] = '<span class="splitsum ' + (okSum ? 'ok' : 'no') + '">' + rs.map(x => x.qty > 0 ? fmtN(x.qty) : '?').join(' + ') + (empty ? '' : ' = ' + fmtN(sum)) + (okSum ? ' ✓' : ' (list: ' + fmtN(want) + ')') + '</span>';
+    if (!okSum && !empty) ck.push('<div><span class="tag t-warn">!</span> The split lines for <b>' + esc(r.src) + '</b> add up to ' + fmtN(sum) + ' but the list says ' + fmtN(want) + '.</div>'); });
   g.rows.forEach((r, i) => {
-    if (r.cust !== lastCust) { h += '<tr class="grp"><td colspan="8">' + esc(r.cust || '—') + '</td></tr>'; lastCust = r.cust; }
+    if (r.cust !== lastCust) { const br = branchOf(r.cust); h += '<tr class="grp"><td colspan="8">' + esc(r.cust || '—') + (br ? ' <span class="tag t-br" title="One of our branches: saved as Transfer Out with Godown ' + esc(br) + ' (no Transfer in: the stock is at the branch)">Transfer to ' + esc(br) + '</span>' : '') + '</td></tr>'; lastCust = r.cust; }
     const rem = r.prod ? remainingFor(g.rows, i) : null;
     if (!r.skip && r.prod && rem && rem[r.loc] < r.qty) shortN++;
-    const listTxt = (r.nosRaw || '') + (r.per != null ? ' × ' + fmtN(r.per) : '') + (r.total != null ? ' = ' + fmtN(r.total) : '');
-    h += '<tr class="' + (r.skip ? 'skip' : '') + '"><td>' + esc(r.src) + '</td><td>' + prodCell(r, i, 'load') + '</td><td>' + howTag(r) + '</td>' +
-      '<td class="small muted" style="white-space:nowrap">' + esc(listTxt) + '</td>' +
-      '<td><span class="seg"><button class="' + (r.basis === 'nos' ? 'on' : '') + '" data-g="load" data-i="' + i + '" data-act="basis" data-b="nos"' + (r.nos == null ? ' disabled' : '') + '>Nos</button><button class="' + (r.basis === 'total' ? 'on' : '') + '" data-g="load" data-i="' + i + '" data-act="basis" data-b="total"' + (r.total == null ? ' disabled' : '') + '>Total</button></span></td>' +
+    const listTxt = r.part || r.manual ? '' : (r.nosRaw || '') + (r.per != null ? ' × ' + fmtN(r.per) : '') + (r.total != null ? ' = ' + fmtN(r.total) : '');
+    const first = r.part ? '<span class="muted small">↳ split: same line, other godown</span>' : r.manual ? '<span class="muted small">added line</span>' : esc(r.src);
+    const basisCell = r.manual ? '<span class="muted small">—</span>' : '<span class="seg"><button class="' + (r.basis === 'nos' ? 'on' : '') + '" data-g="load" data-i="' + i + '" data-act="basis" data-b="nos"' + (r.nos == null ? ' disabled' : '') + '>Nos</button><button class="' + (r.basis === 'total' ? 'on' : '') + '" data-g="load" data-i="' + i + '" data-act="basis" data-b="total"' + (r.total == null ? ' disabled' : '') + '>Total</button></span>';
+    const acts = '<button class="b sm" title="Split this line over another godown" data-g="load" data-i="' + i + '" data-act="split">Split</button> ' +
+      (r.part || r.manual ? '<button class="x" title="Remove this line" data-g="load" data-i="' + i + '" data-act="del">✕</button>' : '<button class="x" title="Skip / include" data-g="load" data-i="' + i + '" data-act="skip">' + (r.skip ? '↺' : '✕') + '</button>');
+    h += '<tr class="' + (r.skip ? 'skip ' : '') + (r.part ? 'part' : '') + '"><td>' + first + '</td><td>' + prodCell(r, i, 'load') + '</td><td>' + howTag(r) + '</td>' +
+      '<td class="small muted" style="white-space:nowrap">' + esc(listTxt) + (splitInfo[i] || '') + '</td>' +
+      '<td>' + basisCell + '</td>' +
       '<td class="n"><input class="q" data-g="load" data-i="' + i + '" data-f="qty" value="' + (r.qty == null ? '' : r.qty) + '" inputmode="decimal"></td>' +
       '<td>' + locSeg('load', i, r.loc, r.prod, r.qty, rem) + '</td>' +
-      '<td><button class="x" title="Skip / include" data-g="load" data-i="' + i + '" data-act="skip">' + (r.skip ? '↺' : '✕') + '</button></td></tr>';
+      '<td style="white-space:nowrap">' + acts + '</td></tr>';
   });
   if (shortN) ck.push('<div><span class="tag t-warn">' + shortN + '</span> row(s) take more than the godown has (red underline). You can still save — it will show up in Negatives.</div>');
   $('loadChecks').innerHTML = ck.join('');
   $('loadTable').innerHTML = h + '</tbody>';
   const live = g.rows.filter(r => !r.skip);
   const badQty = live.some(r => !(r.qty > 0));
-  $('loadSave').textContent = 'Save ' + live.length + ' rows to STOCK OUT';
+  const brN = live.filter(r => branchOf(r.cust)).length;
+  $('loadSave').textContent = 'Save ' + live.length + ' rows to STOCK OUT' + (brN ? ' (' + brN + ' as transfer to a branch)' : '');
   $('loadSave').disabled = !!open || !live.length || badQty || !validDate(date);
 }
 
@@ -1499,22 +1641,35 @@ function typeOptions(sel) {
 }
 
 /* ───────── TRANSFER tab ───────── */
+// rows that one transfer line writes: WH ↔ BB2 ↔ BB1 = a STOCK OUT and a STOCK IN, each with the other godown in column F;
+// to a branch = only the STOCK OUT; from a branch = only the STOCK IN
+function xferRows(r, date) {
+  const out = [];
+  if (!isBranch(r.from)) out.push({ dir: 'OUT', date, prod: r.prod, qty: r.qty, loc: r.from, type: 'Transfer Out', gd: r.to });
+  if (!isBranch(r.to)) out.push({ dir: 'IN', date, prod: r.prod, qty: r.qty, loc: r.to, type: 'Transfer in', gd: r.from });
+  return out;
+}
 function renderXfer() {
   const rows = G.xfer; $('xCard').hidden = !rows.length;
-  let h = '<thead><tr><th>From message</th><th>IMS product</th><th></th><th class="n">Qty</th><th>From</th><th>To</th><th></th></tr></thead><tbody>';
+  let h = '<thead><tr><th>From message</th><th>IMS product</th><th></th><th class="n">Qty</th><th>From</th><th>To</th><th>Writes</th><th></th></tr></thead><tbody>';
   rows.forEach((r, i) => {
-    const rem = r.prod ? remainingFor(rows.map(x => Object.assign({}, x, { loc: x.from })), i) : null;
+    const rem = r.prod && !isBranch(r.from) ? remainingFor(rows.map(x => Object.assign({}, x, { loc: x.from, skip: isBranch(x.from) })), i) : null;
+    const short = rem && r.qty > 0 && rem[r.from] < r.qty;
+    const w = r.from === r.to ? '<span class="tag t-bad">same godown</span>' : isBranch(r.from) && isBranch(r.to) ? '<span class="tag t-bad">branch to branch</span>' :
+      isBranch(r.to) ? '<span class="tag t-br">OUT only</span>' : isBranch(r.from) ? '<span class="tag t-br">IN only</span>' : '<span class="small muted">OUT + IN</span>';
     h += '<tr><td class="small">' + esc(r.src || '') + '</td><td>' + prodCell(r, i, 'xfer') + '</td><td>' + howTag(r) + '</td>' +
       '<td class="n"><input class="q" data-g="xfer" data-i="' + i + '" data-f="qty" value="' + (r.qty == null ? '' : r.qty) + '" inputmode="decimal"></td>' +
-      '<td>' + locSeg('xfer', i, r.from, r.prod, r.qty, rem, 'from') + '</td>' +
-      '<td>' + locSeg('xfer', i, r.to, r.prod, 0, null, 'to') + '</td>' +
+      '<td><select data-g="xfer" data-i="' + i + '" data-f="from"' + (short ? ' class="short" title="The godown has less than this"' : '') + '>' + godOptions(r.from, r.prod, 'from') + '</select></td>' +
+      '<td><select data-g="xfer" data-i="' + i + '" data-f="to">' + godOptions(r.to, r.prod, 'to') + '</select></td>' +
+      '<td>' + w + '</td>' +
       '<td><button class="x" data-g="xfer" data-i="' + i + '" data-act="del">✕</button></td></tr>';
   });
   $('xTable').innerHTML = h + '</tbody>';
   const open = rows.some(r => !r.prod || r.how === 'suggested' || r.how === 'new');
-  const same = rows.some(r => r.from === r.to);
-  $('xSave').textContent = same ? 'From and To are the same on a row' : 'Save ' + rows.length + ' transfers (' + rows.length * 2 + ' rows)';
-  $('xSave').disabled = !rows.length || open || same || rows.some(r => !(r.qty > 0)) || !validDate($('xDate').value);
+  const bad = rows.some(r => r.from === r.to || (isBranch(r.from) && isBranch(r.to)));
+  const n = rows.reduce((t, r) => t + xferRows(r, '').length, 0);
+  $('xSave').textContent = bad ? 'Fix the rows marked red first' : 'Save ' + rows.length + ' transfers (' + n + ' rows)';
+  $('xSave').disabled = !rows.length || open || bad || rows.some(r => !(r.qty > 0)) || !validDate($('xDate').value);
 }
 
 /* ───────── grid events (shared) ───────── */
@@ -1555,7 +1710,8 @@ document.addEventListener('click', e => {
   else if (a === 'skip') r.skip = !r.skip;
   else if (a === 'del') rows.splice(i, 1);
   else if (a === 'loc') r[t.dataset.f || 'loc'] = t.dataset.l;
-  else if (a === 'basis') { r.basis = t.dataset.b; r.qty = qtyFor(r); }
+  else if (a === 'basis') { r.basis = t.dataset.b; if (!r.part) r.qty = qtyFor(r); }
+  else if (a === 'split' && g === 'load') { const k = splitLoadRow(rows, i); rerender(g); const q = document.querySelector('#loadTable input[data-f=qty][data-i="' + k + '"]'); if (q) { q.focus(); q.select(); } return; }
   else if (a === 'newp') { r.adding = true; r.newErr = ''; r.newName = cleanNewName(r.src || ''); const top = (r.sugg || [])[0]; r.newCat = top && prodObj(top.p) ? prodObj(top.p).c : ''; }
   else if (a === 'newcancel') r.adding = false;
   else if (a === 'newsave') { addProduct(g, r); return; }
@@ -1594,7 +1750,7 @@ const KIND_LABEL = { production: 'Production', loading: 'Loading list', quick: '
 function applyLocal(it) {
   if (!S.log) return;
   it.payload.rows.forEach(r => {
-    S.log[r.dir].push([null, r.date, r.prod, r.qty, r.loc, r.type, 0, it.cid]);
+    S.log[r.dir].push([null, r.date, r.prod, r.qty, r.loc, r.type, 0, r.gd || '', it.cid]);
     const p = prodObj(r.prod); if (p) { const d = r.dir === 'IN' ? r.qty : -r.qty; p[r.loc] = r3((p[r.loc] || 0) + d); p.tot = r3((p.tot || 0) + d); }
   });
   (it.payload.aliases || []).forEach(a => {
@@ -1606,14 +1762,14 @@ function applyLocal(it) {
 }
 function unapplyLocal(it) {
   if (!S.log) return;
-  for (const dir of ['IN', 'OUT']) S.log[dir] = S.log[dir].filter(r => r[7] !== it.cid);
+  for (const dir of ['IN', 'OUT']) S.log[dir] = S.log[dir].filter(r => r[8] !== it.cid);
   it.payload.rows.forEach(r => { const p = prodObj(r.prod); if (p) { const d = r.dir === 'IN' ? -r.qty : r.qty; p[r.loc] = r3((p[r.loc] || 0) + d); p.tot = r3((p.tot || 0) + d); } });
 }
 function setRowNumbers(it, where) {
   for (const dir of ['IN', 'OUT']) {
     if (!where[dir]) continue;
     let n = where[dir][0];
-    S.log[dir].forEach(r => { if (r[7] === it.cid && r[0] == null) r[0] = n++; });
+    S.log[dir].forEach(r => { if (r[8] === it.cid && r[0] == null) r[0] = n++; });
   }
 }
 function afterLocalChange() { renderViews(); }
@@ -1799,8 +1955,8 @@ $('loadSave').onclick = () => {
   const g = G.load, date = $('loadDate').value;
   const live = g.rows.filter(r => !r.skip);
   doSave('loading', {
-    rows: live.map(r => ({ dir: 'OUT', date, prod: r.prod, qty: r.qty, loc: r.loc, type: 'Sales' })),
-    aliases: live.filter(r => r.prod && r.src).map(r => ({ src: r.src, prod: r.prod, basis: r.basis, godown: r.loc })),
+    rows: live.map(r => { const br = branchOf(r.cust); return br ? { dir: 'OUT', date, prod: r.prod, qty: r.qty, loc: r.loc, type: 'Transfer Out', gd: br } : { dir: 'OUT', date, prod: r.prod, qty: r.qty, loc: r.loc, type: 'Sales' }; }),
+    aliases: live.filter(r => r.prod && r.src && !r.part && !r.manual).map(r => ({ src: r.src, prod: r.prod, basis: r.basis, godown: r.loc })),
     imp: { kind: 'loading', fileDate: date, fileName: g.fileName }
   }, $('loadSaveMsg'), $('loadSave'), () => { G.load = null; $('loadCard').hidden = true; }, $('loadMsg'));
 };
@@ -1814,7 +1970,7 @@ $('qSave').onclick = () => {
 };
 $('xSave').onclick = () => {
   const date = $('xDate').value; const rows = [];
-  for (const r of G.xfer) { rows.push({ dir: 'OUT', date, prod: r.prod, qty: r.qty, loc: r.from, type: 'Transfer Out' }); rows.push({ dir: 'IN', date, prod: r.prod, qty: r.qty, loc: r.to, type: 'Transfer in' }); }
+  for (const r of G.xfer) rows.push(...xferRows(r, date));
   doSave('transfer', { rows, aliases: aliasesFrom(G.xfer.filter(r => r.src && r.how !== 'learned' && r.how !== 'exact')), imp: { kind: 'transfer' } },
     $('xSaveMsg'), $('xSave'), () => { G.xfer = []; $('xPaste').value = ''; renderXfer(); }, $('xMsg'));
 };
@@ -1995,8 +2151,15 @@ $('pcSave').onclick = async () => {
     if (G.prod && G.prod.p) onPmRead();
   } catch (e) { $('pcMsg').innerHTML = '<span class="tag t-bad">' + esc(e.message) + '</span>'; }
 };
+$('loadAdd').onclick = () => {
+  const g = G.load; if (!g) return; const last = g.rows[g.rows.length - 1];
+  g.rows.push({ cust: last ? last.cust : '', src: '', nosRaw: '', nos: null, per: null, total: null, prod: '', how: 'new', sugg: [], basis: 'nos', qty: null, loc: 'WH', manual: true });
+  renderLoad(); const n = g.rows.length - 1, p = document.querySelector('#loadTable input[data-f=prod][data-i="' + n + '"]'); if (p) p.focus();
+};
 $('loadConfirmAll').onclick = () => { G.load.rows.forEach(r => { if (r.how === 'suggested') r.how = 'manual'; }); renderLoad(); };
-$('loadAllLoc').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || !G.load) return; G.load.rows.forEach(r => r.loc = b.dataset.l); renderLoad(); });
+$('loadAllLoc').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || !G.load) return; G.load.rows.forEach(r => { if (!r.part) r.loc = b.dataset.l; }); renderLoad(); });
+// Sheet Check: staff-only page on the same site; it reads this tool's saved login (ims.session)
+$('toCheck').onclick = e => { e.preventDefault(); if (!S.token) { showGate('Log in to open Sheet check.'); return; } window.open('sheet-check.html', '_blank'); };
 $('loadClear').onclick = () => { G.load = null; $('loadCard').hidden = true; };
 $('qClear').onclick = () => { G.quick = []; renderQuick(); };
 $('xClear').onclick = () => { G.xfer = []; renderXfer(); };
@@ -2024,8 +2187,11 @@ function sessRead() { try { const s = JSON.parse(localStorage.getItem(SESS_KEY) 
 function sessWrite(s) { try { if (s) localStorage.setItem(SESS_KEY, JSON.stringify(s)); else localStorage.removeItem(SESS_KEY); } catch (e) {} }
 function showWho() { $('whoName').textContent = S.user || '—'; if ($('sWho')) $('sWho').textContent = (S.user || '—') + ' (staff admin)'; }
 const ROLE_TXT = { user: 'User', mgmt: 'Management admin', staff: 'Staff admin' };
+let warmed = false;
 function showGate(msg) {
-  $('gMsg').textContent = msg || ''; $('gKey').value = ''; $('gate').hidden = false;
+  $('gMsg').textContent = msg || ''; $('gKey').value = ''; $('gate').hidden = false; gStep(0);
+  // wake the sheet script while the password is typed (the first call of the day is the slow one)
+  if (!warmed && S.url) { warmed = true; try { fetch(S.url, { mode: 'no-cors', cache: 'no-store' }).catch(() => {}); } catch (e) {} }
   setTimeout(() => ($('gUser').value ? $('gKey') : $('gUser')).focus(), 50);
 }
 function authLost(msg) {
@@ -2033,30 +2199,50 @@ function authLost(msg) {
   S.token = ''; sessWrite(null); setConn('bad', 'Logged out');
   showGate((msg || 'Please log in again') + '. Saves made so far are kept and sent after you log in.');
 }
+let stepTimer = null;
+function gStep(n, err) {
+  clearInterval(stepTimer); const t0 = Date.now();
+  $('gSteps').hidden = !n;
+  document.querySelectorAll('#gSteps li').forEach(li => { const s = +li.dataset.s; li.className = s < n ? 'done' : s === n ? (err ? 'err' : 'on') : ''; const t = li.querySelector('.t'); if (t) t.remove(); });
+  if (!n || err) return;
+  const li = $('gSteps').querySelector('[data-s="' + n + '"]');
+  stepTimer = setInterval(() => { const s = Math.round((Date.now() - t0) / 1000); if (s < 2) return; let t = li.querySelector('.t'); if (!t) { t = document.createElement('span'); t.className = 't'; li.appendChild(t); } t.textContent = s + ' s'; }, 500);
+}
+function gBusy(on) { $('gGo').disabled = on; $('gSpin').hidden = !on; $('gGoTxt').textContent = on ? 'Please wait…' : 'Log in'; $('gUser').readOnly = on; $('gKey').readOnly = on; }
 async function login() {
   const u = $('gUser').value.trim(), pw = $('gKey').value;
-  if (!u || !pw) { $('gMsg').textContent = 'Enter your username and password.'; return; }
-  $('gMsg').innerHTML = '<span class="muted">Checking…</span>'; $('gGo').disabled = true;
+  if (!u) { $('gMsg').textContent = 'Enter your username.'; $('gUser').focus(); return; }
+  if (!pw) { $('gMsg').textContent = 'Enter the password.'; $('gKey').focus(); return; }
+  $('gMsg').textContent = ''; gBusy(true); gStep(1);
+  const slow = setTimeout(() => gStep(2), 1200);   // the sheet checks the login and sends the data in one trip
   try {
-    const j = await api('login', { username: u, password: pw });
+    const j = await api('login', { username: u, password: pw, load: 'all' });
+    clearTimeout(slow);
     if (!j.ok) {
+      gStep(0);
       $('gMsg').textContent = j.error === 'Wrong password' ? 'The sheet script is still the old version. Paste Code.gs ' + SHEET_SCRIPT + ' into the sheet and deploy a new version.' : j.error;
-      return;
+      $('gKey').select(); return;
     }
-    if (j.role !== 'staff') { $('gMsg').textContent = 'This is a ' + (ROLE_TXT[j.role] || j.role) + ' login: it opens the dashboard only. The entry tool needs a staff admin login.'; return; }
+    if (j.role !== 'staff') { gStep(0); $('gMsg').textContent = 'This is a ' + (ROLE_TXT[j.role] || j.role) + ' login: it opens the dashboard only. The entry tool needs a staff admin login.'; return; }
     S.token = j.token; S.role = j.role; S.user = j.name;
     sessWrite({ token: j.token, role: j.role, name: j.name, user: u, at: Date.now() });
     store('lastUser', u);
-    $('gate').hidden = true; showWho();
-    await loadAll(); afterStart(); obSync();
-  } catch (e) { $('gMsg').textContent = e.message === 'Failed to fetch' ? 'Could not reach the sheet script. Check the internet connection.' : e.message; }
-  finally { $('gGo').disabled = false; }
+    $('gKey').value = ''; $('gKey').type = 'password'; $('gEyeX').hidden = true;
+    if (j.data && j.data.ok && j.data.log) {
+      gStep(3); await new Promise(r => setTimeout(r, 30));
+      S.checkedAt = S.fullAt = Date.now();
+      const raw = stripRaw(j.data); useData(raw); cacheSave(raw); S.loadedAt = Date.now(); refreshGrids();
+    } else { gStep(2); await loadAll({ full: true }); }   // Sheet Script before v2.1.0
+    $('gate').hidden = true; gStep(0); showWho();
+    afterStart(); obSync(); startSyncLoop();
+  } catch (e) { clearTimeout(slow); gStep(2, true); $('gMsg').textContent = e.message === 'Failed to fetch' ? 'Could not reach the sheet script. Check the internet connection.' : e.message; }
+  finally { gBusy(false); }
 }
-$('gGo').onclick = login;
-['gUser', 'gKey'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); login(); } }));
 $('gateForm').addEventListener('submit', e => { e.preventDefault(); login(); });
+$('gEye').onclick = () => { const k = $('gKey'), show = k.type === 'password'; k.type = show ? 'text' : 'password'; $('gEyeX').hidden = !show; $('gEye').title = show ? 'Hide password' : 'Show password'; k.focus(); };
+['keydown', 'keyup'].forEach(ev => ['gUser', 'gKey'].forEach(id => $(id).addEventListener(ev, e => { if (e.getModifierState) $('gCaps').hidden = !e.getModifierState('CapsLock'); })));
 function logout() {
-  sessWrite(null); S.token = ''; S.ready = false; try { localStorage.removeItem(CACHE_KEY); } catch (e) {}
+  sessWrite(null); S.token = ''; S.ready = false; IDB.del(cacheKey());
   setConn('', 'Logged out'); showGate('');
 }
 $('sOut').onclick = logout; $('logout').onclick = logout;
@@ -2064,14 +2250,12 @@ $('sSave').onclick = async () => {
   const u = $('sUrl').value.trim() || DEFAULT_URL;
   S.url = u; try { if (u === DEFAULT_URL) localStorage.removeItem(URL_KEY); else localStorage.setItem(URL_KEY, u); } catch (e) {}
   $('sMsg').innerHTML = '<span class="muted">Connecting…</span>';
-  await loadAll(); $('sMsg').innerHTML = S.ready ? '<span class="tag t-ok">Connected</span>' : '<span class="tag t-bad">Could not connect</span>';
+  S.raw = null; await loadAll({ full: true }); $('sMsg').innerHTML = S.ready ? '<span class="tag t-ok">Connected</span>' : '<span class="tag t-bad">Could not connect</span>';
 };
 $('catSave').onclick = () => { if (CO) saveCatOrder(CO.slice()); };
 $('catReset').onclick = () => { CO = []; for (const p of S.products) if (p.c && !CO.includes(p.c)) CO.push(p.c); renderCatOrder(); $('catOrderMsg').innerHTML = '<span class="tag t-warn">Not saved</span>'; };
 $('ver').textContent = VERSION; $('gVer').textContent = VERSION + '. Needs Sheet Script ' + SHEET_SCRIPT;
 $('toDash').href = DASH_URL;
-// Sheet Check: staff-only page on the same site; it reads this tool's saved login (ims.session)
-$('toCheck').onclick = e => { e.preventDefault(); if (!S.token) { showGate('Log in to open Sheet check.'); return; } window.open('sheet-check.html', '_blank'); };
 try { S.url = localStorage.getItem(URL_KEY) || DEFAULT_URL; } catch (e) { S.url = DEFAULT_URL; }
 $('sUrl').value = S.url; $('gUser').value = recall('lastUser');
 showTab('home');
@@ -2084,9 +2268,10 @@ showTab('home');
 const sess = sessRead();
 if (sess && sess.role === 'staff') {
   S.token = sess.token; S.role = sess.role; S.user = sess.name; showWho();
-  const c = cacheRead();
-  if (c) { try { useData(c.data, 'Saved copy ' + c.at + ' · updating…'); } catch (e) {} }
-  loadAll().then(afterStart);
+  cacheRead().then(c => {
+    if (c) { try { S.fullAt = c.fullAt || 0; useData(c.data, 'Saved copy ' + c.at + ' · updating…'); } catch (e) { S.raw = null; } }
+    return loadAll();
+  }).then(() => { afterStart(); startSyncLoop(); });
 } else {
   showGate(sess ? 'You are logged in to the dashboard as ' + (ROLE_TXT[sess.role] || sess.role) + '. The entry tool needs a staff admin login.' : '');
 }
