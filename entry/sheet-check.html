@@ -1,4 +1,5 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<!doctype html><html><head><meta charset="utf-8"><meta name="color-scheme" content="light dark">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
 <title>IMS Sheet Check</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -219,6 +220,9 @@ textarea.copybox{width:100%;min-height:200px;border:1px solid var(--line);border
   .kv{grid-template-columns:1fr 1fr}
 }
 @media (max-width:520px){.checks,.what{grid-template-columns:1fr}.verdict{grid-template-columns:1fr}.issue summary{grid-template-columns:auto minmax(0,1fr) auto}.issue .chev{display:none}}
+
+:root[data-theme="light"]{color-scheme:only light}
+:root[data-theme="dark"]{color-scheme:only dark}
 </style>
 
 <div class="app" id="app">
@@ -231,7 +235,7 @@ textarea.copybox{width:100%;min-height:200px;border:1px solid var(--line);border
         <button data-t="light">Light</button><button data-t="dark">Dark</button><button data-t="auto">Auto</button>
       </div>
       <button class="collapse-btn" id="collapseBtn" aria-label="Collapse sidebar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg><span>Collapse</span></button>
-      <div class="ver">v2.1.0 · WH · BB2 · BB1</div>
+      <div class="ver">v2.1.1 · WH · BB2 · BB1</div>
     </div>
   </aside>
   <main class="main"><div class="wrap" id="view"></div></main>

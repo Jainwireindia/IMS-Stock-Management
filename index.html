@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="color-scheme" content="light dark">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>IMS Stock Dashboard</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Crect x='1' y='1' width='28' height='28' rx='7' fill='%230f6a73'/%3E%3Cg stroke='%23e3a613' stroke-width='1.6'%3E%3Cpath d='M10 6v18M15 6v18M20 6v18M6 10h18M6 15h18M6 20h18'/%3E%3C/g%3E%3C/svg%3E">
@@ -346,6 +347,9 @@ th{font-weight:700}
 .gate-card h1{font-size:23px;font-weight:800;letter-spacing:-.02em}
 button.b,.seg button,#subnav button,.chip{font-weight:600}
 input,select,textarea{font-weight:500}
+
+:root[data-theme="light"]{color-scheme:only light}
+:root[data-theme="dark"]{color-scheme:only dark}
 </style>
 </head>
 <body>
@@ -462,7 +466,7 @@ input,select,textarea{font-weight:500}
 <script>
 'use strict';
 /* ───────── shell: login, loading the data, theme ───────── */
-const VERSION = 'v1.2.1', SHEET_SCRIPT = 'v2.2.0', ENTRY_URL = 'entry/';
+const VERSION = 'v1.2.2', SHEET_SCRIPT = 'v2.2.0', ENTRY_URL = 'entry/';
 const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbwpYrxJhyc5gOd1ZABq3x0vYQdpmr2aixqcKCV8Sjv9Jo3IAdGboRMpHbW9_sSlA1aw/exec';   // new sheet (06-11-2026)
 // the old sheet's address, if a browser still has it saved, is dropped so it uses the new sheet
 try { if (localStorage.getItem('ims.url') === 'https://script.google.com/macros/s/AKfycbws7kmv6v4aR-UvP22BTQS7DtoMMFbrv4aKdbseCPuthXisC3wI7e9U-SOWMU_uDng/exec') localStorage.removeItem('ims.url'); } catch (e) {}
@@ -526,7 +530,7 @@ function buildD(a) {
     if (dir === 'OUT' && t === 'Stock Correction') t = 'Stock correction';
     mv.push([d - base, idx.get(k), Math.round(q * 1000) / 1000, LOCS0.indexOf(loc), TYPES.indexOf(t), dir === 'IN' ? 0 : 1, g]);
   }
-  mv.sort((x, y) => x[0] - y[0]);
+  mv.sort((x, y) => x[0] - y[0] || x[5] - y[5]);   // by date; on the same date every IN first, then the OUTs
   const prods = P.map(p => {
     const cat = p.c || '', u = units.get(low(p.p)) || '';
     const bag = low(cat) === 'ms nails' || u.includes('bag');
@@ -1103,18 +1107,42 @@ document.addEventListener('click', e => { const a = e.target.closest('[data-item
 
 const r3 = x => Math.round(x * 1000) / 1000;
 /* item card */
+// lowest and highest total stock of one item, from its first entry to ASOF. Same date: IN first, then OUT →
+// lowest point of a day = its closing stock, highest point = opening + that day's IN. Ties: the latest date.
+function lowHigh(i) {
+  let first = -1;   // the real date of the first entry (an opening balance is counted from day 0, but dated when it was entered)
+  for (const m of D.mv) if (m[1] === i && m[0] >= 0) { first = m[0]; break; }
+  if (first < 0) return null;
+  first = Math.min(first, ASOF);
+  let lo = Infinity, loD = first, loN = 0, hi = -Infinity, hiD = first, hiN = 0;
+  for (let d = first; d <= ASOF && d < HIST.end.length; d++) {
+    const open = d > 0 ? HIST.end[d - 1][i] : 0; let ins = 0;
+    for (const m of BYDAY[d]) if (m[1] === i && !m[5]) ins += m[2];
+    const top = r3(open + ins), end = r3(HIST.end[d][i]);
+    if (end < lo) { lo = end; loD = d; loN = 1; } else if (end === lo) { loD = d; loN++; }
+    if (top > hi) { hi = top; hiD = d; hiN = 1; } else if (top === hi) { hiD = d; hiN++; }
+  }
+  return { lo, loD, loN, hi, hiD, hiN, from: first };
+}
 function itemCard(p) {
   const user = ROLE === 'user', u = unitLabel(p);
   let h = '<div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2 style="font-size:18px">' + esc(p.p) + '</h2><div class="muted small">' + esc(p.c) + ' · ' + u + (p.bag ? ' (stored in bags of 25 kg)' : '') + (p.kgPer && p.unit === 'pcs' ? ' · avg ' + p.kgPer + ' kg each' : '') + (p.wire ? ' · wire ' + esc(p.wire) : '') + '</div></div><button class="x" id="mClose" aria-label="Close">✕</button></div>';
   h += '<div class="grid" style="margin-top:12px">' + LOCS.map(l => tile(l, '<span class="' + (p[l] < 0 ? 'neg' : '') + '">' + fmt(p[l]) + '</span>', u, '')).join('') + tile('Total', '<span class="' + (p.tot < 0 ? 'neg' : '') + '">' + fmt(p.tot) + '</span>', u, stTag(statusOf(p)) + (p.red ? ' red ' + fmt(p.red) + ' · green ' + fmt(p.green) : '')) + '</div>';
   if (!user) {
     const t = ITURNS()[p.i];
+    const lh = lowHigh(p.i);
     h += '<div class="grid" style="margin-top:12px">' + tile('Sold last 30 days', fmt(SOLD30[p.i]), u, '') + tile('Days of stock left', daysLeft(p) == null ? '—' : daysLeft(p), 'days', 'at the last 30 days’ sales rate') + tile('Item turns', t.yr == null ? '—' : t.yr.toFixed(1) + '×', 'a year', t.stl) + '</div>';
+    if (lh) h += '<div class="grid" style="margin-top:12px">' +
+      tile('Lowest stock', '<span class="' + (lh.lo < 0 ? 'neg' : '') + '">' + fmt(lh.lo) + '</span>', u, 'on ' + dStr(lh.loD) + (lh.loN > 1 ? ' (last time; ' + lh.loN + ' days at this level)' : '')) +
+      tile('Highest stock', fmt(lh.hi), u, 'on ' + dStr(lh.hiD) + (lh.hiN > 1 ? ' (last time; ' + lh.hiN + ' days at this level)' : '')) + '</div>' +
+      '<div class="muted small" style="margin-top:6px">All godowns together, from the first entry (' + dStr(lh.from) + ') to ' + dStr(ASOF) + '. On each date the stock that came in is counted first, then what went out: the lowest is the stock at the end of a day, the highest is after that day’s IN entries.</div>';
     h += '<h3>Stock over time (all godowns)</h3><div id="icStock"></div><h3>Sales and production per month</h3><div id="icMonth"></div>';
-    // newest first; "stock after" is worked back from today's total, so it always ends at the current stock
-    const mv = []; let bal = p.tot;
-    for (let d = ASOF; d >= 0 && mv.length < 15; d--) { const arr = BYDAY[d].filter(m => m[1] === p.i); for (let k = arr.length - 1; k >= 0 && mv.length < 15; k--) { const m = arr[k]; mv.push({ m, bal }); if (!/^transfer/i.test(D.types[m[4]] || '')) bal = r3(bal - (m[5] ? -m[2] : m[2])); } }
-    h += '<h3>Last movements</h3><div class="muted small" style="margin:-4px 0 8px">“Total stock” is the stock of all godowns together after that entry. A transfer only moves stock between godowns, so the total stays the same.</div><div class="tw"><table><thead><tr><th>Date</th><th>Type</th><th>Godown</th><th class="n">In</th><th class="n">Out</th><th class="n">Total stock</th></tr></thead><tbody>' + mv.map(({ m, bal }) => '<tr><td>' + dStr(m[0]) + '</td><td>' + esc(D.types[m[4]] || '—') + '</td><td>' + LOCS[m[3]] + '</td><td class="n">' + (m[5] ? '' : fmt(m[2])) + '</td><td class="n">' + (m[5] ? fmt(m[2]) : '') + '</td><td class="n"><b>' + fmt(bal) + '</b></td></tr>').join('') + '</tbody></table></div>';
+    // the same lines as Stock movement (all godowns): newest first, IN before OUT on a date, a transfer between godowns = one line
+    const LG = moveLedger(p.i, [Math.max(0, ASOF - 400), ASOF], true), mvL = LG.rows.slice(-15).reverse();
+    const gap = r3(p.tot - LG.close);
+    if (Math.abs(gap) > 0.001) h += '<div class="card" style="margin-top:12px;border-color:var(--warn);background:var(--warn-bg)"><b>The entries add up to ' + fmt(LG.close) + ' ' + u + ', CURRENT STOCK shows ' + fmt(p.tot) + '</b> (difference ' + fmt(gap) + '). Lowest / highest and the movements below follow the entries. Check STOCK IN / STOCK OUT rows of this item (godown names, dates, quantities) or the CURRENT STOCK formula.</div>';
+    h += '<h3>Last movements</h3><div class="muted small" style="margin:-4px 0 8px">“Total stock” is the stock of all godowns together after that entry. On a date the IN entries come first, then the OUT entries. A transfer between WH, BB2 and BB1 is one line and leaves the total as it is; a transfer to another branch lowers it.</div><div class="tw"><table><thead><tr><th>Date</th><th>Type</th><th>Godown</th><th class="n">In</th><th class="n">Out</th><th class="n">Total stock</th></tr></thead><tbody>' +
+      mvL.map(x => '<tr><td>' + dStr(x.d) + '</td><td>' + esc(x.type) + (x.note ? ' <span class="tag ' + (x.flag ? (XST[x.st] || XST.qty)[1] : 't-info') + '">' + esc(x.note) + '</span>' : '') + '</td><td>' + esc(x.loc) + '</td><td class="n">' + (x.inQ == null ? '' : fmt(x.inQ)) + '</td><td class="n">' + (x.outQ == null ? '' : fmt(x.outQ)) + '</td><td class="n"><b class="' + (x.bal < 0 ? 'neg' : '') + '">' + fmt(x.bal) + '</b></td></tr>').join('') + '</tbody></table></div>';
   }
   $('modalCard').innerHTML = h; $('modal').classList.add('on');
   if (!user) {
@@ -1285,8 +1313,8 @@ function moveItems(r) {
 }
 // oldest first. All godowns: total stock; a transfer between WH / BB2 / BB1 is ONE line (BB1/WH, out and in) and leaves the
 // total as it is when both sides are there. One godown: that godown's stock, the transfer shows where it went to / came from.
-function moveLedger(i, r) {
-  const k = godK(), out = [], X = TX();
+function moveLedger(i, r, kAll) {
+  const k = kAll ? -1 : godK(), out = [], X = TX();
   let bal = k < 0 ? r2(r[0] > 0 ? HIST.end[r[0] - 1][i] : 0) : 0;
   if (k >= 0) { for (let d = 0; d < r[0] && d < BYDAY.length; d++) for (const m of BYDAY[d]) if (m[1] === i && m[3] === k) bal += m[5] ? -m[2] : m[2]; bal = r3(bal); }
   const open = bal, done = new Set();
